@@ -546,16 +546,12 @@ public class DexCollectionService extends Service {
             final BluetoothGattService gattService = mBluetoothGatt.getService(xDripDataService);
             if (gattService == null) {
 
-                if (!static_use_blukon) {
+                if (!static_use_blukon && !prefs.getString("btDevice","").equals("blueReader")) {
                     Log.w(TAG, "onServicesDiscovered: xdrip service " + xDripDataService + " not found");
                     // TODO this should be reworked to be an efficient selector
                     listAvailableServices(mBluetoothGatt);
                 }
-
-                //add just to check if this work for bluereader
-                if (!prefs.getString("btDevice","").equals("blueReader"))  Log.w(TAG, "onServicesDiscovered: service " + xDripDataService + " not found");
-                listAvailableServices(mBluetoothGatt);
-
+                 listAvailableServices(mBluetoothGatt);
                 // try next
             }
             else
