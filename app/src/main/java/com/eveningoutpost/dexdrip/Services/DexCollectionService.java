@@ -126,6 +126,7 @@ public class DexCollectionService extends Service {
     private static boolean static_use_rfduino_bluetooth = false;
     private static boolean static_use_polling = false;
     private static boolean static_use_blukon = false;
+    private static boolean static_use_nrf = false;
     private static String static_last_hexdump;
     private static String static_last_sent_hexdump;
 
@@ -501,6 +502,7 @@ public class DexCollectionService extends Service {
                                 mBluetoothGatt.close();
                                 mBluetoothGatt = null;
                                 mCharacteristic = null;
+                                servicesDiscovered = null;
                             }
                             lastdata = null;
                         }
@@ -546,7 +548,7 @@ public class DexCollectionService extends Service {
             final BluetoothGattService gattService = mBluetoothGatt.getService(xDripDataService);
             if (gattService == null) {
 
-                if (!static_use_blukon && !prefs.getString("btDevice","").equals("blueReader")) {
+                if ((!static_use_blukon) && (!static_use_nrf)) {
                     Log.w(TAG, "onServicesDiscovered: xdrip service " + xDripDataService + " not found");
                     // TODO this should be reworked to be an efficient selector
                     listAvailableServices(mBluetoothGatt);
@@ -626,6 +628,7 @@ public class DexCollectionService extends Service {
                     Log.d(TAG,"onServicesDiscovered: returning due to null nrf characteristic");
                     return;
                 } else {
+                    static_use_nrf = true;
                     mCharacteristic = nrfGattCharacteristic;
                     final int charaProp = nrfGattCharacteristic.getProperties();
                     if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
@@ -813,6 +816,7 @@ public class DexCollectionService extends Service {
         if (mCharacteristic == null) {
             status("Error: mCharacteristic was null in sendBtMessage");
             Log.e(TAG, lastState);
+            servicesDiscovered = null;
             return false;
         }
 
@@ -916,6 +920,7 @@ public class DexCollectionService extends Service {
         mBluetoothGatt = null;
         mCharacteristic = null;
         mConnectionState = STATE_DISCONNECTED;
+        servicesDiscovered = null;
     }
 
     public synchronized void setSerialDataToTransmitterRawData(byte[] buffer, int len) {
@@ -1042,7 +1047,8 @@ public class DexCollectionService extends Service {
                 Log.w(TAG, "blueReader_Full_Battery set to: " + transmitterData.sensor_battery_level) ;
             }
         } else {
-            sensor.latest_battery_level = (sensor.latest_battery_level != 0) ? Math.min(sensor.latest_battery_level, transmitterData.sensor_battery_level) : transmitterData.sensor_battery_level;
+            //sensor.latest_battery_level = (sensor.latest_battery_level != 0) ? Math.min(sensor.latest_battery_level, transmitterData.sensor_battery_level) : transmitterData.sensor_battery_level;
+            sensor.latest_battery_level = transmitterData.sensor_battery_level; // allow level to go up and down
         }
         sensor.save();
 
@@ -1156,6 +1162,15 @@ public class DexCollectionService extends Service {
             l.add(new StatusItem("Hardware", "Rfduino"));
         }
 
+        if (static_use_blukon) {
+            l.add(new StatusItem("Hardware", xdrip.getAppContext().getString(R.string.blukon)));
+        }
+
+        if (static_use_nrf) {
+            l.add(new StatusItem("Hardware", "BlueReader"));
+        }
+
+
         // TODO add LimiTTer info
 
         if (last_transmitter_Data != null) {
@@ -1204,9 +1219,9 @@ public class DexCollectionService extends Service {
                     }));
         }
 
-        if (retry_time > 0) l.add(new StatusItem("Next Retry", JoH.niceTimeTill(retry_time), JoH.msTill(retry_time)<-1 ? StatusItem.Highlight.CRITICAL : StatusItem.Highlight.NORMAL));
+        if (retry_time > 0) l.add(new StatusItem("Next Retry", JoH.niceTimeTill(retry_time), JoH.msTill(retry_time)< -2 ? StatusItem.Highlight.CRITICAL : StatusItem.Highlight.NORMAL));
         if (failover_time > 0)
-            l.add(new StatusItem("Next Wake up", JoH.niceTimeTill(failover_time), JoH.msTill(failover_time) < -1 ? StatusItem.Highlight.CRITICAL : StatusItem.Highlight.NORMAL));
+            l.add(new StatusItem("Next Wake up", JoH.niceTimeTill(failover_time), JoH.msTill(failover_time) < -2 ? StatusItem.Highlight.CRITICAL : StatusItem.Highlight.NORMAL));
 
         if (Home.get_engineering_mode() && DexCollectionType.hasLibre()) {
             l.add(new StatusItem("Request Data", "Test for xBridgePlus protocol", immediateSend == null ? StatusItem.Highlight.NORMAL : StatusItem.Highlight.NOTICE, "long-press", new Runnable() {
