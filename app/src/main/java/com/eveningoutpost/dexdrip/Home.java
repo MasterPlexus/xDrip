@@ -1010,6 +1010,8 @@ public class Home extends ActivityWithMenu {
                 (btnCarbohydrates.getVisibility() == View.INVISIBLE) &&
                 (btnInsulinDose.getVisibility() == View.INVISIBLE)) {
             hideAllTreatmentButtons(); // we clear values here also
+            //send toast to wear - closes the confirmation activity on the watch
+            WatchUpdaterService.sendWearToast("Treatment processed", Toast.LENGTH_LONG);
             return true;
         } else {
             return false;
@@ -1822,7 +1824,8 @@ public class Home extends ActivityWithMenu {
 
         //Transmitter Battery Level
         final Sensor sensor = Sensor.currentSensor();
-        if (sensor != null && sensor.latest_battery_level != 0 && sensor.latest_battery_level <= Constants.TRANSMITTER_BATTERY_LOW && !prefs.getBoolean("disable_battery_warning", false)) {
+        //Adding the hide of using this notice because it makes no sense for Bluereader
+        if (sensor != null && sensor.latest_battery_level != 0 && !prefs.getString("btDevice","").equals("blueReader") && sensor.latest_battery_level <= Constants.TRANSMITTER_BATTERY_LOW && !prefs.getBoolean("disable_battery_warning", false)) {
             Drawable background = new Drawable() {
 
                 @Override
