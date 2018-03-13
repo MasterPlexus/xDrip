@@ -199,14 +199,20 @@ public class BgReading extends Model implements ShareUploadableBg {
         return mmolConvert(calculated_value);
     }
 
-    public void injectDisplayGlucose(BestGlucose.DisplayGlucose displayGlucose){
+    public void injectDisplayGlucose(BestGlucose.DisplayGlucose displayGlucose) {
         //displayGlucose can be null. E.g. when out of order values come in
-        if (displayGlucose != null){
-            dg_mgdl = displayGlucose.mgdl;
-            dg_slope = displayGlucose.slope;
-            dg_delta_name = displayGlucose.delta_name;
-            // TODO we probably should reflect the display glucose delta here as well for completeness
-            this.save();
+        if (displayGlucose != null) {
+            if (Math.abs(displayGlucose.timestamp - timestamp) < Constants.MINUTE_IN_MS * 10) {
+                dg_mgdl = displayGlucose.mgdl;
+                dg_slope = displayGlucose.slope;
+                dg_delta_name = displayGlucose.delta_name;
+                // TODO we probably should reflect the display glucose delta here as well for completeness
+                this.save();
+            } else {
+                if (JoH.ratelimit("cannotinjectdg", 30)) {
+                    UserError.Log.e(TAG, "Cannot inject display glucose value as time difference too great: " + JoH.dateTimeText(displayGlucose.timestamp) + " vs " + JoH.dateTimeText(timestamp));
+                }
+            }
         }
     }
 
@@ -422,6 +428,7 @@ public class BgReading extends Model implements ShareUploadableBg {
     }
 
     public static BgReading create(double raw_data, double filtered_data, Context context, Long timestamp, boolean quick) {
+        if (context == null) context = xdrip.getAppContext();
         final BgReading bgReading = new BgReading();
         Sensor sensor = Sensor.currentSensor();
         if (sensor == null) {
@@ -484,6 +491,11 @@ public class BgReading extends Model implements ShareUploadableBg {
 
                 if ((bgReading.raw_data != 0) && (bgReading.raw_data * 2 == bgReading.filtered_data)) {
                     Log.wtf(TAG, "Filtered data is exactly double raw - this is completely wrong - dead transmitter? - blocking glucose calculation");
+                    bgReading.calculated_value = 0;
+                    bgReading.filtered_calculated_value = 0;
+                    bgReading.hide_slope = true;
+                } else if (!SensorSanity.isRawValueSane(bgReading.raw_data)) {
+                    Log.wtf(TAG, "Raw data fails sanity check! " + bgReading.raw_data);
                     bgReading.calculated_value = 0;
                     bgReading.filtered_calculated_value = 0;
                     bgReading.hide_slope = true;
@@ -813,36 +825,6 @@ public class BgReading extends Model implements ShareUploadableBg {
         }
     }
 
-    public static List<BgReading> latest_till(long till, int number) {
-        return latest_till(till, number, Home.get_follower());
-    }
-
-    public static List<BgReading> latest_till(long till, int number, boolean is_follower) {
-        if (is_follower) {
-            // exclude sensor information when working as a follower
-            return new Select()
-                    .from(BgReading.class)
-                    .where("calculated_value != 0")
-                    .where("raw_data != 0") // TODO XXX
-                    .orderBy("timestamp desc")
-                    .limit(number)
-                    .execute();
-        } else {
-            Sensor sensor = Sensor.currentSensor();
-            if (sensor == null) {
-                return null;
-            }
-            return new Select()
-                    .from(BgReading.class)
-                    .where("Sensor = ? ", sensor.getId())
-                    .where("calculated_value != 0")
-                    .where("raw_data != 0")
-                    .orderBy("timestamp desc")
-                    .limit(number)
-                    .execute();
-        }
-    }
-
     public static boolean isDataStale() {
         final BgReading last = lastNoSenssor();
         if (last == null) return true;
@@ -1057,11 +1039,19 @@ public class BgReading extends Model implements ShareUploadableBg {
 
             bgr.timestamp = timestamp;
             bgr.calculated_value = value;
+            
 
             // rough code for testing!
             bgr.filtered_calculated_value = value;
-            bgr.raw_data = value*1000;
-            bgr.filtered_data = value*1000;
+            bgr.raw_data = value;
+            bgr.age_adjusted_raw_value = value;
+            bgr.filtered_data = value;
+            
+            final Sensor forced_sensor = Sensor.currentSensor();
+            if (forced_sensor != null) {
+                bgr.sensor = forced_sensor;
+                bgr.sensor_uuid = forced_sensor.uuid;
+            }
 
             try {
                 if (readingNearTimeStamp(bgr.timestamp) == null) {
@@ -1069,8 +1059,8 @@ public class BgReading extends Model implements ShareUploadableBg {
                     bgr.find_slope();
                     if (do_notification) {
                         xdrip.getAppContext().startService(new Intent(xdrip.getAppContext(), Notifications.class)); // alerts et al
-                        BgSendQueue.handleNewBgReading(bgr, "create", xdrip.getAppContext(), true, !do_notification); // pebble and widget
                     }
+                    BgSendQueue.handleNewBgReading(bgr, "create", xdrip.getAppContext(), false, !do_notification); // pebble and widget
                 } else {
                     Log.d(TAG, "Ignoring duplicate bgr record due to timestamp: " + timestamp);
                 }
