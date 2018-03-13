@@ -57,7 +57,7 @@ script:
   - adb shell input tap 134 467
   - travis_retry travis_wait nice ./gradlew app:connectedAndroidTest -PdisablePreDex
   - ./gradlew assembleRelease
-  - sh settags.sh
+  - ./sh settags.sh
 
 after_failure:
   - adb shell screencap -p | sed 's/\r$//' > failure-screen.png
