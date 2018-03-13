@@ -58,6 +58,7 @@ script:
   - travis_retry travis_wait nice ./gradlew app:connectedAndroidTest -PdisablePreDex
   - ./gradlew assembleRelease
   - sh ./settags.sh
+  - find -iname \*.apk
 
 after_failure:
   - adb shell screencap -p | sed 's/\r$//' > failure-screen.png
@@ -71,7 +72,7 @@ deploy:
   provider: releases
   api_key:
     secure: C3o6U+LZZQTGIyoMboZtAujOlCiK/TrBhiwLT4VQOl2sm5Ez6IvtHXf2E+u338nQM1CshrQxm2827Tn+pPsyxtYFFHWdh2Ump7QZyJkgwvYjR0LvD6voxKuH4ZoZg+ufNMkWOufc4r+3VYLa3LN+mscdZ/LeMIWjLLnXZ3EqUP9kG7jrA1ZyLmFzmc111DahAyvbx0OPJ3nLQQWpdNIyNZZEJTzLH7L6MgqtyyjVL1L4M6lBX2fQkodld13Vujsr9cNa+yGGfHQfxfU8+kODh8uE6aNi07BUiDmC0Cub4ed7XbNEqRRxUQvMN1deGfPpA3NwHXn60wrowF/qp7jKWxdz/ZUTGK9F0nGRdnY3NrMhK6LPuVuWbZGdV/sWBJ5X4hrCNBqgKYNNe+kXuE+/Sh8La1qHRIp9pjgfI2T/p9Ow9mjC3+Dhj8owwqAWuBHmTtSk7tEuL8WU0s67zevgKMiLK0phbykAcr6UBK8HHH/5RAHgAGowtS/GMtsmcrrSe8uzYiE1rRLM1JfDU7CnPgqfnXrFg2yDP4Ef/1EHh3CVP2g3locgEjrmEcWZkbz6Uwcd9+iEKFByua0Ck+0GTLSz3VxSKicQP4ynNvyqyOOVFJ3uKXSO7T9xfjUh4LJLiW7S+HwI4B3gE5SeBSbj1uBShYmNaMpsUbxT88H46BA=
-  file: xDrip/build/outputs/apk/xDrip*release*.apk
+  file: app/build/outputs/apk/xDrip*release*.apk
   file_glob: "true"
   skip_cleanup: true
   on:
