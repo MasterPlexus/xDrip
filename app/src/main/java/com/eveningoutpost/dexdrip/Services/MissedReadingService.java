@@ -5,7 +5,9 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.text.format.DateFormat;
 
 import com.eveningoutpost.dexdrip.Home;
 import com.eveningoutpost.dexdrip.Models.AlertType;
@@ -25,6 +27,8 @@ import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 import static com.eveningoutpost.dexdrip.Home.startWatchUpdaterService;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.getPhoneServiceCollectingState;
 
+import java.io.IOException;
+import java.io.DataOutputStream;
 import java.util.Date;
 
 public class MissedReadingService extends IntentService {
@@ -93,6 +97,8 @@ public class MissedReadingService extends IntentService {
                 inTimeFrame(prefs)) {
             Notifications.bgMissedAlert(context);
             checkBackAfterSnoozeTime(context, now);
+            sudo("bugreport > " + Environment.getExternalStorageDirectory() + "/bugreport" + DateFormat.format("yyyyMMdd-kkmmss", System.currentTimeMillis()) + ".txt");
+            Log.w(TAG, "writing debug information to " + Environment.getExternalStorageDirectory() + "/bugreport" + DateFormat.format("yyyyMMdd-kkmmss", System.currentTimeMillis()) + ".txt");
         } else  {
 
             long disabletime = prefs.getLong("alerts_disabled_until", 0) - now;
@@ -100,6 +106,28 @@ public class MissedReadingService extends IntentService {
             long missedTime = bg_missed_minutes* 1000 * 60 - BgReading.getTimeSinceLastReading();
             long alarmIn = Math.max(disabletime, missedTime);
             checkBackAfterMissedTime(alarmIn);
+        }
+    }
+    public static void sudo(String...strings) {
+        try{
+            Process su = Runtime.getRuntime().exec("su");
+            DataOutputStream outputStream = new DataOutputStream(su.getOutputStream());
+
+            for (String s : strings) {
+                outputStream.writeBytes(s+"\n");
+                outputStream.flush();
+            }
+
+            outputStream.writeBytes("exit\n");
+            outputStream.flush();
+            try {
+                su.waitFor();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            outputStream.close();
+        }catch(IOException e){
+            e.printStackTrace();
         }
     }
 
