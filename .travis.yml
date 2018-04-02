@@ -77,4 +77,4 @@ deploy:
   skip_cleanup: true
   on:
     repo: MasterPlexus/xDrip
-    branch: blueReader-debugger_Version
+    branch: blueReader-debuger_Version
