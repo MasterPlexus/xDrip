@@ -1,4 +1,4 @@
-BRANCH="blueReader-debuger_Version"
+BRANCH="bluerader-debuger_Version"
 
 # Are we on the right branch?
 if [ "$TRAVIS_BRANCH" = "$BRANCH" ]; then
@@ -14,7 +14,7 @@ if [ "$TRAVIS_BRANCH" = "$BRANCH" ]; then
       git config --global user.name "MasterPlexus"
 
       # Add tag and push to master.
-      git tag -a v${TRAVIS_BUILD_NUMBER} -m "Travis build $TRAVIS_BUILD_NUMBER pushed a tag."
+      git tag -a v${TRAVIS_BUILD_NUMBER}-debugger -m "Travis build $TRAVIS_BUILD_NUMBER pushed a tag."
       git push origin --tags
       git fetch origin
 
