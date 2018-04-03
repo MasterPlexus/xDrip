@@ -656,6 +656,11 @@
                 android:key="blueReader_writebatterylog"
                 android:summary="write the Battery-Information for additional analytic in a file. Please only use this, if you will be asked by a developer!"
                 android:title="Batterylog" />
+            <SwitchPreference
+                android:defaultValue="false"
+                android:key="blueReader_write_debug"
+                android:summary="writing complete Bugreport on sdcard wen bg-missed-Alert will given. ATTENTION, use with care, big files will be generated!"
+                android:title="Debug info while BG-values missed" />
         </PreferenceScreen>
             <CheckBoxPreference
                 android:defaultValue="true"

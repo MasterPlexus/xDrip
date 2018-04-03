@@ -2,6 +2,8 @@ package com.eveningoutpost.dexdrip.Models;
 
 import android.text.format.DateFormat;
 import com.eveningoutpost.dexdrip.Home;
+
+import java.io.DataOutputStream;
 import java.nio.ByteBuffer;
 import java.util.Date;
 import com.eveningoutpost.dexdrip.Services.DexCollectionService;
@@ -29,6 +31,7 @@ public class blueReader {
     private static final String BatLog="/BatteryLog.csv";
     private static int counterHibernated = 0;
     private static String tempVers="";
+    private static boolean gotRoot =false;
 
     private final static byte[] shutdown = new byte[]{0x6B};
     private final static byte[] requestValue = new byte[]{0x6C};
@@ -191,6 +194,25 @@ public class blueReader {
         Log.i(TAG, "initialize blueReader!");
         Pref.setInt("bridge_battery", 0);
         PersistentStore.setDouble("blueReaderFirmwareValue", 0);
+        if ( Pref.getBooleanDefaultFalse("blueReader_write_debug") && !gotRoot) {
+            //get su
+            try{
+                Process su = Runtime.getRuntime().exec("su");
+                DataOutputStream outputStream = new DataOutputStream(su.getOutputStream());
+
+                outputStream.writeBytes("exit\n");
+                outputStream.flush();
+                gotRoot=true;
+                try {
+                    su.waitFor();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                outputStream.close();
+            }catch(IOException e){
+                e.printStackTrace();
+            }
+        }
 
         //command to get Firmware
         ByteBuffer ackMessage = ByteBuffer.allocate(3);

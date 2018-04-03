@@ -19,6 +19,7 @@ import com.eveningoutpost.dexdrip.Models.UserError.Log;
 import com.eveningoutpost.dexdrip.Models.UserNotification;
 import com.eveningoutpost.dexdrip.UtilityModels.CollectionServiceStarter;
 import com.eveningoutpost.dexdrip.UtilityModels.Notifications;
+import com.eveningoutpost.dexdrip.UtilityModels.Pref;
 import com.eveningoutpost.dexdrip.UtilityModels.pebble.PebbleUtil;
 import com.eveningoutpost.dexdrip.UtilityModels.pebble.PebbleWatchSync;
 import com.eveningoutpost.dexdrip.webservices.XdripWebService;
@@ -97,9 +98,11 @@ public class MissedReadingService extends IntentService {
                 inTimeFrame(prefs)) {
             Notifications.bgMissedAlert(context);
             checkBackAfterSnoozeTime(context, now);
-            sudo("bugreport > " + Environment.getExternalStorageDirectory() + "/bugreport" + DateFormat.format("yyyyMMdd-kkmmss", System.currentTimeMillis()) + ".txt");
-            Log.w(TAG, "writing debug information to " + Environment.getExternalStorageDirectory() + "/bugreport" + DateFormat.format("yyyyMMdd-kkmmss", System.currentTimeMillis()) + ".txt");
-        } else  {
+            if ( Pref.getBooleanDefaultFalse("blueReader_write_debug")) {
+                sudo("bugreport > " + Environment.getExternalStorageDirectory() + "/bugreport_" + DateFormat.format("yyyyMMdd-kkmmss", System.currentTimeMillis()) + ".txt");
+                Log.w(TAG, "writing debug information to " + Environment.getExternalStorageDirectory() + "/bugreport" + DateFormat.format("yyyyMMdd-kkmmss", System.currentTimeMillis()) + ".txt");
+            }
+            } else  {
 
             long disabletime = prefs.getLong("alerts_disabled_until", 0) - now;
 
