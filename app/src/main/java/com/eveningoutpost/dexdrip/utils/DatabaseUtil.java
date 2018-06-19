@@ -231,7 +231,7 @@ public class DatabaseUtil {
                 printStream = new PrintStream(zipOutputStream);
 
                 //add Treatment and BGlucose Header
-                printStream.println("DATUM_DE;TIME;UDT_CGMS;BG_LEVEL;CH_GR;BOLUS;REMARK");
+                printStream.println("DAY;TIME;UDT_CGMS;BG_LEVEL;CH_GR;BOLUS;REMARK");
 
                 SQLiteDatabase db = Cache.openDatabase();
 
