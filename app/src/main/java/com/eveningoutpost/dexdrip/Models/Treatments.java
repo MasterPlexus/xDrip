@@ -207,6 +207,7 @@ public class Treatments extends Model {
         Treatment.enteredBy = XDRIP_TAG;
         Treatment.eventType = "Sensor Start";
         Treatment.created_at = DateUtil.toISOString(timestamp);
+        Treatment.timestamp = timestamp;
         Treatment.uuid = UUID.randomUUID().toString();
         Treatment.save();
         pushTreatmentSync(Treatment);
@@ -402,8 +403,19 @@ public class Treatments extends Model {
 
     public static synchronized boolean pushTreatmentFromJson(String json, boolean from_interactive) {
         Log.d(TAG, "converting treatment from json: " + json);
-        Treatments mytreatment = fromJSON(json);
+        final Treatments mytreatment = fromJSON(json);
         if (mytreatment != null) {
+            if ((mytreatment.carbs == 0) && (mytreatment.insulin == 0)
+                    && (mytreatment.notes != null) && (mytreatment.notes.startsWith("AndroidAPS started"))) {
+                Log.d(TAG, "Skipping AndroidAPS started message");
+                return false;
+            }
+            if ((mytreatment.eventType != null) && (mytreatment.eventType.equals("Temp Basal"))) {
+                // we don't yet parse or process these
+                Log.d(TAG, "Skipping Temp Basal msg");
+                return false;
+            }
+
             if (mytreatment.uuid == null) {
                 try {
                     final JSONObject jsonobj = new JSONObject(json);
@@ -413,12 +425,26 @@ public class Treatments extends Model {
                 }
                 if (mytreatment.uuid == null) mytreatment.uuid = UUID.randomUUID().toString();
             }
-            Treatments dupe_treatment = byTimestamp(mytreatment.timestamp);
+            // anything received +- 1500 ms is going to be treated as a duplicate
+            final Treatments dupe_treatment = byTimestamp(mytreatment.timestamp);
             if (dupe_treatment != null) {
                 Log.i(TAG, "Duplicate treatment for: " + mytreatment.timestamp);
 
+                if ((dupe_treatment.insulin == 0) && (mytreatment.insulin > 0)) {
+                    dupe_treatment.insulin = mytreatment.insulin;
+                    dupe_treatment.save();
+                    Home.staticRefreshBGChartsOnIdle();
+                }
+
+                if ((dupe_treatment.carbs == 0) && (mytreatment.carbs > 0)) {
+                    dupe_treatment.carbs = mytreatment.carbs;
+                    dupe_treatment.save();
+                    Home.staticRefreshBGChartsOnIdle();
+                }
+
                 if ((dupe_treatment.uuid !=null) && (mytreatment.uuid !=null) && (dupe_treatment.uuid.equals(mytreatment.uuid)) && (mytreatment.notes != null))
                 {
+
                     if ((dupe_treatment.notes == null) || (dupe_treatment.notes.length() < mytreatment.notes.length()))
                     {
                         dupe_treatment.notes = mytreatment.notes;
@@ -427,7 +453,7 @@ public class Treatments extends Model {
                         Log.d(TAG,"Saved updated treatement notes");
                         // should not end up needing to append notes and be from_interactive via undo as these
                         // would be mutually exclusive operations so we don't need to handle that here.
-                        Home.staticRefreshBGCharts();
+                        Home.staticRefreshBGChartsOnIdle();
                     }
                 }
 
@@ -908,6 +934,14 @@ public class Treatments extends Model {
         return responses;
     }
 
+    public String getBestShortText() {
+        if (!eventType.equals("<none>")) {
+            return eventType;
+        } else {
+            return "Treatment";
+        }
+    }
+
     public String toJSON() {
         JSONObject jsonObject = new JSONObject();
         try {
@@ -923,6 +957,17 @@ public class Treatments extends Model {
             e.printStackTrace();
             return "";
         }
+    }
+
+    private static final double MAX_SMB_UNITS = 0.3;
+    private static final double MAX_OPENAPS_SMB_UNITS = 0.4;
+    public boolean likelySMB() {
+        return (carbs == 0 && insulin > 0
+                && ((insulin <= MAX_SMB_UNITS && (notes == null || notes.length() == 0)) || (enteredBy != null && enteredBy.startsWith("openaps:") && insulin <= MAX_OPENAPS_SMB_UNITS)));
+    }
+
+    public boolean noteOnly() {
+        return (carbs == 0 && insulin == 0 && (notes != null && notes.length() > 0));
     }
 
     public String toS() {

@@ -9,6 +9,7 @@ import android.preference.PreferenceManager;
 
 import com.eveningoutpost.dexdrip.GcmActivity;
 import com.eveningoutpost.dexdrip.Home;
+import com.eveningoutpost.dexdrip.Models.JoH;
 import com.eveningoutpost.dexdrip.Models.UserError.Log;
 import com.eveningoutpost.dexdrip.Services.DailyIntentService;
 import com.eveningoutpost.dexdrip.Services.DexCollectionService;
@@ -25,6 +26,9 @@ import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 import com.eveningoutpost.dexdrip.xdrip;
 
 import java.util.Calendar;
+
+import static com.eveningoutpost.dexdrip.utils.DexCollectionType.Medtrum;
+import static com.eveningoutpost.dexdrip.utils.DexCollectionType.getCollectorServiceClass;
 
 /**
  * Created by Emma Black on 12/22/14.
@@ -48,6 +52,16 @@ public class CollectionServiceStarter {
         return false;
     }
 
+    public static boolean isWifiandBTLibre(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        String collection_method = prefs.getString("dex_collection_method", "BluetoothWixel");
+        if (collection_method.compareTo("LimiTTerWifi") == 0) {
+            return true;
+        }
+        return false;
+    }
+
+    
     // are we in the specifc mode supporting wifi and dexbridge at the same time
     public static boolean isWifiandDexBridge()
     {
@@ -60,13 +74,13 @@ public class CollectionServiceStarter {
         return isWifiandDexBridge() || isDexbridgeWixel(xdrip.getAppContext());
     }
 
-    public static boolean isBTWixel(Context context) {
+    public static boolean isBTWixelOrLimiTTer(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String collection_method = prefs.getString("dex_collection_method", "BluetoothWixel");
-        return isBTWixel(collection_method);
+        return isBTWixelOrLimiTTer(collection_method);
     }
 
-    public static boolean isBTWixel(String collection_method) {
+    public static boolean isBTWixelOrLimiTTer(String collection_method) {
         return collection_method.equals("BluetoothWixel")
                 || collection_method.equals("LimiTTer");
     }
@@ -119,6 +133,15 @@ public class CollectionServiceStarter {
         return false;
     }
 
+    public static boolean isWifiLibre(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        String collection_method = prefs.getString("dex_collection_method", "BluetoothWixel");
+        if (collection_method.compareTo("LibreWifi") == 0) {
+            return true;
+        }
+        return false;
+    }
+
         /*
      * LimiTTer emulates a BT-Wixel and works with the BT-Wixel service.
      * It would work without any changes but in some cases knowing that the data does not
@@ -128,18 +151,36 @@ public class CollectionServiceStarter {
     public static boolean isLimitter() {
         return Pref.getStringDefaultBlank("dex_collection_method").equals("LimiTTer");
     }
+    
+    public static boolean isWifiandBTLibre() {
+        return Pref.getStringDefaultBlank("dex_collection_method").equals("LimiTTerWifi");
+    }
+    
 
     public static boolean isWifiWixel(String collection_method) {
         return collection_method.equals("WifiWixel") || DexCollectionType.getDexCollectionType() == DexCollectionType.Mock;
     }
+    
+    public static boolean isWifiLibre(String collection_method) {
+        return collection_method.equals("LibreWifi") || DexCollectionType.getDexCollectionType() == DexCollectionType.Mock;
+    }
+    
 
     public static boolean isFollower(String collection_method) {
         return collection_method.equals("Follower");
     }
 
-    public static void newStart(Context context) {
-        CollectionServiceStarter collectionServiceStarter = new CollectionServiceStarter(context);
-        collectionServiceStarter.start(context);
+    private static void newStart(final Context context) {
+        new CollectionServiceStarter(context).start(context);
+    }
+
+    public void stopAll() {
+        stopBtShareService();
+        stopBtWixelService();
+        stopWifWixelThread();
+        stopFollowerThread();
+        stopG5Service();
+        JoH.stopService(getCollectorServiceClass(Medtrum));
     }
 
     public void start(Context context, String collection_method) {
@@ -147,12 +188,12 @@ public class CollectionServiceStarter {
         xdrip.checkAppContext(context);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.mContext);
 
-        if (isBTWixel(collection_method) || isDexbridgeWixel(collection_method)) {
+        if (isBTWixelOrLimiTTer(collection_method) || isDexbridgeWixel(collection_method)) {
             Log.d("DexDrip", "Starting bt wixel collector");
             stopWifWixelThread();
             stopBtShareService();
             stopFollowerThread();
-            stopG5ShareService();
+            stopG5Service();
 
             if (prefs.getBoolean("wear_sync", false)) {//KS
                 boolean enable_wearG5 = prefs.getBoolean("enable_wearG5", false);
@@ -165,12 +206,12 @@ public class CollectionServiceStarter {
             else {
                 startBtWixelService();
             }
-        } else if (isWifiWixel(collection_method)) {
+        } else if (isWifiWixel(collection_method) || isWifiLibre(collection_method)) {
             Log.d("DexDrip", "Starting wifi wixel collector");
             stopBtWixelService();
             stopFollowerThread();
             stopBtShareService();
-            stopG5ShareService();
+            stopG5Service();
 
             startWifWixelThread();
         } else if (isBTShare(collection_method)) {
@@ -178,7 +219,7 @@ public class CollectionServiceStarter {
             stopBtWixelService();
             stopFollowerThread();
             stopWifWixelThread();
-            stopG5ShareService();
+            stopG5Service();
 
             if (prefs.getBoolean("wear_sync", false)) {//KS
                 boolean enable_wearG5 = prefs.getBoolean("enable_wearG5", false);
@@ -212,13 +253,13 @@ public class CollectionServiceStarter {
                 startBtG5Service();
             }
 
-        } else if (isWifiandBTWixel(context) || isWifiandDexBridge()) {
+        } else if (isWifiandBTWixel(context) || isWifiandDexBridge() || isWifiandBTLibre(context)) {
             Log.d("DexDrip", "Starting wifi and bt wixel collector");
             stopBtWixelService();
             stopFollowerThread();
             stopWifWixelThread();
             stopBtShareService();
-            stopG5ShareService();
+            stopG5Service();
 
             // start both
             Log.d("DexDrip", "Starting wifi wixel collector first");
@@ -240,9 +281,14 @@ public class CollectionServiceStarter {
             stopWifWixelThread();
             stopBtShareService();
             stopBtWixelService();
-            stopG5ShareService();
+            stopG5Service();
 
             startFollowerThread();
+        } else {
+            if (DexCollectionType.hasBluetooth()) {
+                Log.d("DexDrip","Starting service based on collector lookup");
+                JoH.startService(DexCollectionType.getCollectorServiceClass());
+            }
         }
 
         if (prefs.getBoolean("broadcast_to_pebble", false) && (PebbleUtil.getCurrentPebbleSyncType() != 1)) {
@@ -253,17 +299,6 @@ public class CollectionServiceStarter {
         startDailyIntentService();
         Log.d(TAG, collection_method);
 
-      /*  // Start logging to logcat
-        if (prefs.getBoolean("store_logs", false)) {
-            String filePath = Environment.getExternalStorageDirectory() + "/xdriplogcat.txt";
-            try {
-                String[] cmd = {"/system/bin/sh", "-c", "ps | grep logcat  || logcat -f " + filePath +
-                        " -v threadtime AlertPlayer:V com.eveningoutpost.dexdrip.Services.WixelReader:V *:E "};
-                Runtime.getRuntime().exec(cmd);
-            } catch (IOException e2) {
-                Log.e(TAG, "running logcat failed, is the device rooted?", e2);
-            }
-        }*/
 
     }
 
@@ -274,30 +309,32 @@ public class CollectionServiceStarter {
         start(context, collection_method);
     }
 
-    public CollectionServiceStarter(Context context) {
+    // private constructer, use static methods to start
+    private CollectionServiceStarter(Context context) {
         if (context == null) context = xdrip.getAppContext();
         this.mContext = context;
     }
 
+    private static void restartCollectionService() {
+        restartCollectionService(xdrip.getAppContext());
+    }
+
+    public static void restartCollectionServiceBackground() {
+        Inevitable.task("restart-collection-service",500,() -> restartCollectionService(xdrip.getAppContext()));
+    }
+
+
     public static void restartCollectionService(Context context) {
         if (context == null) context = xdrip.getAppContext();
-        CollectionServiceStarter collectionServiceStarter = new CollectionServiceStarter(context);
-        collectionServiceStarter.stopBtShareService();
-        collectionServiceStarter.stopBtWixelService();
-        collectionServiceStarter.stopWifWixelThread();
-        collectionServiceStarter.stopFollowerThread();
-        collectionServiceStarter.stopG5ShareService();
-        collectionServiceStarter.start(context);
+        final CollectionServiceStarter collectionServiceStarter = new CollectionServiceStarter(context);
+        collectionServiceStarter.stopAll();
+        Inevitable.task("restart-collection-service-start", 1000, () -> collectionServiceStarter.start(xdrip.getAppContext()));
     }
 
     public static void restartCollectionService(Context context, String collection_method) {
         Log.d(TAG, "restartCollectionService: " + collection_method);
         CollectionServiceStarter collectionServiceStarter = new CollectionServiceStarter(context);
-        collectionServiceStarter.stopBtShareService();
-        collectionServiceStarter.stopBtWixelService();
-        collectionServiceStarter.stopWifWixelThread();
-        collectionServiceStarter.stopFollowerThread();
-        collectionServiceStarter.stopG5ShareService();
+        collectionServiceStarter.stopAll();
         collectionServiceStarter.start(context, collection_method);
     }
 
@@ -312,6 +349,8 @@ public class CollectionServiceStarter {
             case DexcomG5:
                 collectionServiceStarter.startBtG5Service();
                 break;
+            case Medtrum:
+                JoH.startService(getCollectorServiceClass(Medtrum));
             default:
                 collectionServiceStarter.startBtWixelService();
                 break;
@@ -323,7 +362,7 @@ public class CollectionServiceStarter {
         CollectionServiceStarter collectionServiceStarter = new CollectionServiceStarter(context);
         collectionServiceStarter.stopBtShareService();
         collectionServiceStarter.stopBtWixelService();
-        collectionServiceStarter.stopG5ShareService();
+        collectionServiceStarter.stopG5Service();
         Log.d(TAG, "stopBtService should have called onDestroy");
     }
 
@@ -348,7 +387,7 @@ public class CollectionServiceStarter {
 
     private void startBtG5Service() {
         Log.d(TAG,"stopping G5 service");
-        stopG5ShareService();
+        stopG5Service();
         Log.d(TAG, "starting G5 service");
         //if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
        if (!Pref.getBooleanDefaultFalse(Ob1G5CollectionService.OB1G5_PREFS)) {
@@ -409,12 +448,13 @@ public class CollectionServiceStarter {
         this.mContext.stopService(new Intent(this.mContext, DoNothingService.class));
     }
 
-    private void stopG5ShareService() {
+    private void stopG5Service() {
         Log.d(TAG, "stopping G5  service");
         G5CollectionService.keep_running = false; // ensure zombie stays down
         this.mContext.stopService(new Intent(this.mContext, G5CollectionService.class));
         Ob1G5CollectionService.keep_running = false; // ensure zombie stays down
         this.mContext.stopService(new Intent(this.mContext, Ob1G5CollectionService.class));
+        Ob1G5CollectionService.resetSomeInternalState();
     }
 
 }
