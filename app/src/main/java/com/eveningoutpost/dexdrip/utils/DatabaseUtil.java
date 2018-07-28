@@ -287,6 +287,7 @@ public class DatabaseUtil {
                         if (valueCHO.equals("0")) valueCHO = "";
                         if (!valueIE.equals("") || !valueCHO.equals("") || !notes.equals("")) {
                             date.setTime(timestamp);
+                            notes = Pattern.compile("\n").matcher(notes).replaceAll("||");  
                             printStream.println(df.format(date) + ";;" + valueCHO + ";" + valueIE + ";" + notes);
                         }
                     } while (cur.moveToNext());
