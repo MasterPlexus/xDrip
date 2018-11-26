@@ -1120,4 +1120,7 @@
     <string name="advanced_mode">Advanced Mode</string>
     <string name="reminder_title">Reminder Title</string>
     <string name="what_time_of_day_question">What time of day?</string>
+    <string name="please_allow_permission">Please Allow Permission</string>
+    <string name="without_location_scan_doesnt_work">Without Location permission Android Bluetooth scan doesn\'t work</string>
+    <string name="without_location_permission_emergency_cannot_get_location">Without Location permission emergency messages cannot use location data</string>
 </resources>
