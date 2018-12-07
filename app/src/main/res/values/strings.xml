@@ -1038,6 +1038,7 @@
     <string name="title_Other_misc_options">Other misc options</string>
     <string name="summary_allow_testing_with_dead_sensor">allow testing with dead sensor</string>
     <string name="title_NOT_FOR_PRODUCTION_USE">NOT FOR PRODUCTION USE</string>
+
     <string name="title_You_have_no_reminders_yet">You have no reminders yet</string>
     <string name="message_reminders_explanation">Reminders can be used for things like pump site changes or anything else.\n\nThey can repeat, be set for various time periods. Be snoozed, postponed, rescheduled etc.\n\nClick the + button to add a reminder.</string>
     <string name="title_swipe_reminder">Swipe left or right</string>
