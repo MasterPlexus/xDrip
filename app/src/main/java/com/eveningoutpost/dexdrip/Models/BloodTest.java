@@ -19,6 +19,7 @@ import com.eveningoutpost.dexdrip.UtilityModels.PersistentStore;
 import com.eveningoutpost.dexdrip.UtilityModels.Pref;
 import com.eveningoutpost.dexdrip.UtilityModels.UploaderQueue;
 import com.eveningoutpost.dexdrip.calibrations.CalibrationAbstract;
+import com.eveningoutpost.dexdrip.calibrations.NativeCalibrationPipe;
 import com.eveningoutpost.dexdrip.calibrations.PluggableCalibration;
 import com.eveningoutpost.dexdrip.messages.BloodTestMessage;
 import com.eveningoutpost.dexdrip.messages.BloodTestMultiMessage;
@@ -163,6 +164,15 @@ public class BloodTest extends Model {
             if (UploaderQueue.newEntry("insert", bt) != null) {
                 SyncService.startSyncService(3000); // sync in 3 seconds
             }
+
+            if (Pref.getBooleanDefaultFalse("bluetooth_meter_for_calibrations_auto")) {
+                if ((JoH.msSince(bt.timestamp) < Constants.MINUTE_IN_MS * 5) && (JoH.msSince(bt.timestamp) > 0)) {
+                    UserError.Log.d(TAG, "Blood test value recent enough to send to G5");
+                    //Ob1G5StateMachine.addCalibration((int) bt.mgdl, timestamp_ms);
+                    NativeCalibrationPipe.addCalibration((int) bt.mgdl, timestamp_ms);
+                }
+            }
+
             return bt;
         } else {
             UserError.Log.d(TAG, "Not creating new reading as timestamp is too close");
@@ -402,8 +412,8 @@ public class BloodTest extends Model {
                 Log.d(TAG, "opportunistic: No blood tests");
                 return;
             }
-            if (JoH.msSince(bt.timestamp) > Constants.DAY_IN_MS) {
-                Log.d(TAG, "opportunistic: Blood test older than 1 days ago");
+            if (JoH.msSince(bt.timestamp) > (Constants.HOUR_IN_MS * 8)) {
+                Log.d(TAG, "opportunistic: Blood test older than 8 hours ago");
                 return;
             }
 
@@ -420,6 +430,7 @@ public class BloodTest extends Model {
             final Calibration calibration = Calibration.lastValid();
             if (calibration == null) {
                 Log.d(TAG, "opportunistic: No calibrations");
+                // TODO do we try to initial calibrate using this?
                 return;
             }
 
@@ -459,8 +470,8 @@ public class BloodTest extends Model {
             // TODO store evaluation failure for this record in cache for future optimization
 
             // TODO Check we have prior reading as well perhaps
-
-            UserError.Log.ueh(TAG, "Opportunistic calibration for Blood Test at " + JoH.dateTimeText(bt.timestamp) + " of " + BgGraphBuilder.unitized_string_with_units_static(bt.mgdl) + " matching sensor slope at: " + JoH.dateTimeText(bgReading.timestamp));
+            JoH.clearCache();
+            UserError.Log.ueh(TAG, "Opportunistic calibration for Blood Test at " + JoH.dateTimeText(bt.timestamp) + " of " + BgGraphBuilder.unitized_string_with_units_static(bt.mgdl) + " matching sensor slope at: " + JoH.dateTimeText(bgReading.timestamp) + " from source " + bt.source);
             final long time_since = JoH.msSince(bt.timestamp);
 
 
@@ -493,7 +504,7 @@ public class BloodTest extends Model {
             if (bgReading != null) {
                 final Calibration calibration = bgReading.calibration;
                 if (calibration == null) {
-                    Log.d(TAG,"Calibration for bgReading is null! @ "+JoH.dateTimeText(bgReading.timestamp));
+                    Log.d(TAG, "Calibration for bgReading is null! @ " + JoH.dateTimeText(bgReading.timestamp));
                     continue;
                 }
                 final double diff = Math.abs(bgReading.calculated_value - bt.mgdl);

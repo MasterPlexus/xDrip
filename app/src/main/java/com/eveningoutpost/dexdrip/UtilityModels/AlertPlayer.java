@@ -27,6 +27,9 @@ import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.Services.SnoozeOnNotificationDismissService;
 import com.eveningoutpost.dexdrip.SnoozeActivity;
 import com.eveningoutpost.dexdrip.UtilityModels.pebble.PebbleWatchSync;
+import com.eveningoutpost.dexdrip.eassist.AlertTracker;
+import com.eveningoutpost.dexdrip.watch.lefun.LeFun;
+import com.eveningoutpost.dexdrip.watch.lefun.LeFunEntry;
 import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 import com.eveningoutpost.dexdrip.xdrip;
 
@@ -104,8 +107,8 @@ public class AlertPlayer {
 
     private final static String TAG = AlertPlayer.class.getSimpleName();
     private volatile MediaPlayer mediaPlayer;
-    int volumeBeforeAlert = -1;
-    int volumeForThisAlert = -1;
+    volatile int volumeBeforeAlert = -1;
+    volatile int volumeForThisAlert = -1;
 
     final static int ALERT_PROFILE_HIGH = 1;
     final static int ALERT_PROFILE_ASCENDING = 2;
@@ -128,6 +131,10 @@ public class AlertPlayer {
         return alertPlayerInstance;
     }
 
+    public static void defaultSnooze() {
+        AlertPlayer.getPlayer().Snooze(xdrip.getAppContext(), -1);
+    }
+
     public synchronized void startAlert(Context ctx, boolean trendingToAlertEnd, AlertType newAlert, String bgValue) {
         startAlert(ctx, trendingToAlertEnd, newAlert, bgValue, Pref.getBooleanDefaultFalse("start_snoozed")); // for start snoozed by default!
     }
@@ -145,6 +152,7 @@ public class AlertPlayer {
 
         ActiveBgAlert.Create(newAlert.uuid, start_snoozed, nextAlertTime);
         if (!start_snoozed) VibrateNotifyMakeNoise(ctx, newAlert, bgValue, newAlert.override_silent_mode, 0);
+        AlertTracker.evaluate();
     }
 
     public synchronized void stopAlert(Context ctx, boolean ClearData, boolean clearIfSnoozeFinished) {
@@ -172,7 +180,7 @@ public class AlertPlayer {
     }
 
     // only do something if an alert is active - only call from interactive
-    public synchronized void OpportunisticSnooze() {
+    public synchronized boolean OpportunisticSnooze() {
         if (JoH.ratelimit("opp-snooze-check", 3)) {
             if (ActiveBgAlert.getOnly() != null) {
                 // there is an alert so do something
@@ -181,8 +189,10 @@ public class AlertPlayer {
                 if (JoH.ratelimit("opportunistic-snooze-toast", 300)) {
                     JoH.static_toast_long("Opportunistic Snooze");
                 }
+                return true;
             }
         }
+        return false;
     }
 
     //  default signature for user initiated interactive snoozes only
@@ -264,6 +274,7 @@ public class AlertPlayer {
             activeBgAlert.updateNextAlertAt(nextAlertTime);
             
             VibrateNotifyMakeNoise(ctx, alert, bgValue, alert.override_silent_mode, minutesFromStartPlaying);
+            AlertTracker.evaluate();
         }
 
     }
@@ -326,8 +337,8 @@ public class AlertPlayer {
             
         try {
             mediaPlayer.prepare();
-        } catch (IOException e) {
-            Log.e(TAG, "Caught exception preparing meidaPlayer", e);
+        } catch (IllegalStateException | IOException e) {
+            Log.e(TAG, "Caught exception preparing mediaPlayer", e);
             return;
         } catch (NullPointerException e) {
             Log.e(TAG,"Possible deep error in mediaPlayer", e);
@@ -340,7 +351,13 @@ public class AlertPlayer {
             volumeForThisAlert = (int) (maxVolume * VolumeFrac);
 
             Log.i(TAG, "before playing volumeBeforeAlert " + volumeBeforeAlert + " volumeForThisAlert " + volumeForThisAlert);
-            manager.setStreamVolume(getAlertPlayerStreamType(), volumeForThisAlert, 0);
+            try {
+                manager.setStreamVolume(getAlertPlayerStreamType(), volumeForThisAlert, 0);
+            } catch (SecurityException e) {
+                if (JoH.ratelimit("sound volume error", 12000)) {
+                    UserError.Log.wtf(TAG, "This device does not allow us to modify the sound volume");
+                }
+            }
             try {
                 mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                     @Override
@@ -362,19 +379,27 @@ public class AlertPlayer {
             Log.wtf(TAG, "PlayFile: Starting an alert failed, what should we do !!!");
         }
     }
-    
-    private void revertCurrentVolume(final Context ctx) {
+
+    private synchronized void revertCurrentVolume(final Context ctx) {
         AudioManager manager = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
         int currentVolume = manager.getStreamVolume(getAlertPlayerStreamType());
         Log.i(TAG, "revertCurrentVolume volumeBeforeAlert " + volumeBeforeAlert + " volumeForThisAlert " + volumeForThisAlert
                 + " currentVolume " + currentVolume);
         if (volumeForThisAlert == currentVolume && (volumeBeforeAlert != -1) && (volumeForThisAlert != -1)) {
             // If the user has changed the volume, don't change it again.
-            manager.setStreamVolume(getAlertPlayerStreamType(), volumeBeforeAlert, 0);
+
+            try {
+                manager.setStreamVolume(getAlertPlayerStreamType(), volumeBeforeAlert, 0);
+            } catch (SecurityException e) {
+                if (JoH.ratelimit("sound volume error", 12000)) {
+                    UserError.Log.wtf(TAG, "This device does not allow us to modify the sound volume");
+                }
+            }
+
         }
         volumeBeforeAlert = -1;
-        volumeForThisAlert = - 1;
-        
+        volumeForThisAlert = -1;
+
     }
 
     private PendingIntent notificationIntent(Context ctx, Intent intent){
@@ -503,6 +528,10 @@ public class AlertPlayer {
             if (JoH.ratelimit("pebble_vibe_start", 59)) {
                 JoH.startService(PebbleWatchSync.class);
             }
+        }
+
+        if (LeFunEntry.areAlertsEnabled() && ActiveBgAlert.currentlyAlerting()) {
+            LeFun.sendAlert(highlow, bgValue);
         }
 
         // speak alert

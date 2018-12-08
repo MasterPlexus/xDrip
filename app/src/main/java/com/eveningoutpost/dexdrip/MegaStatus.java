@@ -30,6 +30,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.eveningoutpost.dexdrip.Models.DesertSync;
 import com.eveningoutpost.dexdrip.Models.JoH;
 import com.eveningoutpost.dexdrip.Models.RollCall;
 import com.eveningoutpost.dexdrip.Models.UserError;
@@ -44,8 +45,11 @@ import com.eveningoutpost.dexdrip.UtilityModels.Pref;
 import com.eveningoutpost.dexdrip.UtilityModels.ShotStateStore;
 import com.eveningoutpost.dexdrip.UtilityModels.StatusItem;
 import com.eveningoutpost.dexdrip.UtilityModels.UploaderQueue;
+import com.eveningoutpost.dexdrip.cgm.medtrum.MedtrumCollectionService;
 import com.eveningoutpost.dexdrip.utils.ActivityWithMenu;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
+import com.eveningoutpost.dexdrip.watch.lefun.LeFunEntry;
+import com.eveningoutpost.dexdrip.watch.lefun.LeFunService;
 import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.targets.ViewTarget;
@@ -56,6 +60,7 @@ import java.util.List;
 
 import static com.eveningoutpost.dexdrip.Home.startWatchUpdaterService;
 import static com.eveningoutpost.dexdrip.utils.DexCollectionType.DexcomG5;
+import static com.eveningoutpost.dexdrip.utils.DexCollectionType.Medtrum;
 
 public class MegaStatus extends ActivityWithMenu {
 
@@ -94,10 +99,12 @@ public class MegaStatus extends ActivityWithMenu {
     }
 
     private static final String G4_STATUS = "BT Device";
-    private static final String G5_STATUS = "G5 Status";
+    private static final String G5_STATUS = "G5/G6 Status";
+    private static final String MEDTRUM_STATUS = "Medtrum Status";
     private static final String IP_COLLECTOR = "IP Collector";
     private static final String XDRIP_PLUS_SYNC = "Followers";
     private static final String UPLOADERS = "Uploaders";
+    private static final String LEFUN_STATUS = "Lefun";
 
     public static PendingIntent getStatusPendingIntent(String section_name) {
         final Intent intent = new Intent(xdrip.getAppContext(), MegaStatus.class);
@@ -119,10 +126,12 @@ public class MegaStatus extends ActivityWithMenu {
             }
             if (dexCollectionType.equals(DexcomG5)) {
                 if (Pref.getBooleanDefaultFalse(Ob1G5CollectionService.OB1G5_PREFS)) {
-                    addAsection(G5_STATUS, "OB1 G5 Collector and Transmitter Status");
+                    addAsection(G5_STATUS, "OB1 G5/G6 Collector and Transmitter Status");
                 } else {
                     addAsection(G5_STATUS, "G5 Collector and Transmitter Status");
                 }
+            } else if (dexCollectionType.equals(Medtrum)) {
+                addAsection(MEDTRUM_STATUS, "Medtrum A6 Status");
             }
             if (DexCollectionType.hasWifi()) {
                 addAsection(IP_COLLECTOR, dexCollectionType == DexCollectionType.Mock ? "FAKE / MOCK DATA SOURCE" : "Wifi Wixel / Parakeet Status");
@@ -135,6 +144,9 @@ public class MegaStatus extends ActivityWithMenu {
                     || Pref.getBooleanDefaultFalse("share_upload")
                     || (Pref.getBooleanDefaultFalse("wear_sync") && Home.get_engineering_mode())) {
                 addAsection(UPLOADERS, "Cloud Uploader Queues");
+            }
+            if (LeFunEntry.isEnabled()) {
+                addAsection(LEFUN_STATUS, "Lefun Watch Status");
             }
 
             //addAsection("Misc", "Currently Empty");
@@ -163,17 +175,23 @@ public class MegaStatus extends ActivityWithMenu {
                     la.addRows(G5CollectionService.megaStatus());
                 }
                 break;
+            case MEDTRUM_STATUS:
+                la.addRows(MedtrumCollectionService.megaStatus());
+                break;
             case IP_COLLECTOR:
                 la.addRows(WifiCollectionService.megaStatus(mActivity));
                 break;
             case XDRIP_PLUS_SYNC:
                 la.addRows(DoNothingService.megaStatus());
                 la.addRows(GcmListenerSvc.megaStatus());
+                la.addRows(DesertSync.megaStatus());
                 la.addRows(RollCall.megaStatus());
                 break;
             case UPLOADERS:
                 la.addRows(UploaderQueue.megaStatus());
                 break;
+            case LEFUN_STATUS:
+                la.addRows(LeFunService.megaStatus());
         }
         la.changed();
     }
@@ -270,8 +288,7 @@ public class MegaStatus extends ActivityWithMenu {
         if (Home.get_enable_wear()) {
             if (DexCollectionType.getDexCollectionType().equals(DexcomG5)) {
                 startWatchUpdaterService(xdrip.getAppContext(), WatchUpdaterService.ACTION_STATUS_COLLECTOR, TAG, "getBatteryStatusNow", G5CollectionService.getBatteryStatusNow);
-            }
-            else {
+            } else {
                 startWatchUpdaterService(xdrip.getAppContext(), WatchUpdaterService.ACTION_STATUS_COLLECTOR, TAG);
             }
         }
@@ -566,29 +583,12 @@ public class MegaStatus extends ActivityWithMenu {
                 viewHolder.name.setText(row.name);
                 viewHolder.value.setText(row.value);
 
-                int new_colour = -1;
-                switch (row.highlight) {
-                    case BAD:
-                        new_colour = Color.parseColor("#480000");
-                        break;
-                    case NOTICE:
-                        new_colour = Color.parseColor("#403000");
-                        break;
-                    case GOOD:
-                        new_colour = Color.parseColor("#003000");
-                        break;
-                    case CRITICAL:
-                        new_colour = Color.parseColor("#770000");
-                        break;
-                    default:
-                        new_colour = Color.TRANSPARENT;
-                        break;
-                }
-                if (new_colour != -1) {
-                    viewHolder.value.setBackgroundColor(new_colour);
-                    viewHolder.spacer.setBackgroundColor(new_colour);
-                    viewHolder.name.setBackgroundColor(new_colour);
-                }
+                final int new_colour = row.highlight.color();
+                //if (new_colour != -1) {
+                viewHolder.value.setBackgroundColor(new_colour);
+                viewHolder.spacer.setBackgroundColor(new_colour);
+                viewHolder.name.setBackgroundColor(new_colour);
+                //}
                 view.setOnClickListener(null); // reset
                 if ((row.runnable != null) && (row.button_name != null) && (row.button_name.equals("long-press"))) {
                     runnableView = view; // last one

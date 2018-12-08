@@ -1,7 +1,6 @@
 package com.eveningoutpost.dexdrip.UtilityModels;
 
 import android.annotation.TargetApi;
-import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -44,12 +43,12 @@ import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.Services.ActivityRecognizedService;
 import com.eveningoutpost.dexdrip.Services.MissedReadingService;
 import com.eveningoutpost.dexdrip.Services.SnoozeOnNotificationDismissService;
+import com.eveningoutpost.dexdrip.evaluators.PersistentHigh;
 import com.eveningoutpost.dexdrip.ui.NumberGraphic;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 import com.eveningoutpost.dexdrip.utils.PowerStateReceiver;
 import com.eveningoutpost.dexdrip.xdrip;
 
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -65,9 +64,9 @@ public class Notifications extends IntentService {
     public static boolean bg_notifications_watch;
     public static boolean bg_persistent_high_alert_enabled_watch;
     public static boolean bg_ongoing;
-    public static boolean bg_vibrate;
-    public static boolean bg_lights;
-    public static boolean bg_sound;
+    //public static boolean bg_vibrate;
+   // public static boolean bg_lights;
+   // public static boolean bg_sound;
     public static boolean bg_sound_in_silent;
     public static String bg_notification_sound;
 
@@ -85,7 +84,7 @@ public class Notifications extends IntentService {
 
 
     Context mContext;
-    PendingIntent wakeIntent;
+    private static volatile PendingIntent wakeIntent;
     private static Handler mHandler = new Handler(Looper.getMainLooper());
 
     private BestGlucose.DisplayGlucose dg;
@@ -123,37 +122,30 @@ public class Notifications extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        PowerManager pm = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "NotificationsIntent");
-        wl.acquire(60000);
-        boolean unclearReading = false;
+
+        final PowerManager.WakeLock wl = JoH.getWakeLock("NotificationsService", 60000);
+
+        boolean unclearReading;
         try {
             Log.d("Notifications", "Running Notifications Intent Service");
             final Context context = getApplicationContext();
 
             if (Pref.getBoolean("motion_tracking_enabled", false)) {
+                // TODO move this
                 ActivityRecognizedService.reStartActivityRecogniser(context);
             }
 
             ReadPerfs(context);
             unclearReading = notificationSetter(context);
-            ArmTimer(context, unclearReading);
+            scheduleWakeup(context, unclearReading);
             context.startService(new Intent(context, MissedReadingService.class));
 
-
         } finally {
-            if (wl.isHeld()) wl.release();
+            JoH.releaseWakeLock(wl);
         }
     }
 
-    public static void staticUpdateNotification() {
-        try {
-            Context context = xdrip.getAppContext();
-            context.startService(new Intent(context, Notifications.class));
-        } catch (Exception e) {
-            Log.e(TAG, "Got exception in staticupdatenotification: " + e);
-        }
-    }
+
 
 
     public void ReadPerfs(Context context) {
@@ -162,9 +154,9 @@ public class Notifications extends IntentService {
         bg_notifications = prefs.getBoolean("bg_notifications", true);
         bg_notifications_watch = PersistentStore.getBoolean("bg_notifications_watch");
         bg_persistent_high_alert_enabled_watch = PersistentStore.getBoolean("persistent_high_alert_enabled_watch");
-        bg_vibrate = prefs.getBoolean("bg_vibrate", true);
-        bg_lights = prefs.getBoolean("bg_lights", true);
-        bg_sound = prefs.getBoolean("bg_play_sound", true);
+        //bg_vibrate = prefs.getBoolean("bg_vibrate", true);
+        //bg_lights = prefs.getBoolean("bg_lights", true);
+        //bg_sound = prefs.getBoolean("bg_play_sound", true);
         bg_notification_sound = prefs.getString("bg_notification_sound", "content://settings/system/notification_sound");
         bg_sound_in_silent = prefs.getBoolean("bg_sound_in_silent", false);
 
@@ -183,7 +175,7 @@ public class Notifications extends IntentService {
  * Function for new notifications
  */
 
-
+// TODO REFACTOR
     private void FileBasedNotifications(Context context) {
         ReadPerfs(context);
         Sensor sensor = Sensor.currentSensor();
@@ -337,7 +329,7 @@ public class Notifications extends IntentService {
         }
         // TODO: Add this alerts as well to depend on unclear sensor reading.
         //if (watchAlert && bg_persistent_high_alert_enabled_watch) {
-        BgReading.checkForPersistentHigh();
+        PersistentHigh.checkForPersistentHigh();
         evaluateLowPredictionAlarm();
         reportNoiseChanges();
 
@@ -496,14 +488,12 @@ public class Notifications extends IntentService {
   */
     }
     
-    private void ArmTimer(Context ctx, boolean unclearAlert) {
-        Calendar calendar = Calendar.getInstance();
-        final long now = calendar.getTimeInMillis();
-        Log.d("Notifications", "ArmTimer called");
+    private synchronized void scheduleWakeup(Context context, boolean unclearAlert) {
+       // Calendar calendar = Calendar.getInstance();
+        final long now = JoH.tsl();
+        long wakeTime = calcuatleArmTime(context, now, unclearAlert);
 
-        long wakeTime = calcuatleArmTime(ctx, now, unclearAlert);
-
-        
+        // TODO make this neater - immediate wake time not needed as handled in JoH wakeup?
         if(wakeTime < now ) {
             Log.e("Notifications" , "ArmTimer recieved a negative time, will fire in 6 minutes");
             wakeTime = now + 6 * 60000;
@@ -515,12 +505,20 @@ public class Notifications extends IntentService {
             wakeTime = now + 1000;
         }
         
-        AlarmManager alarm = (AlarmManager) getSystemService(ALARM_SERVICE);
+        //AlarmManager alarm = (AlarmManager) getSystemService(ALARM_SERVICE);
 
         // TODO use JoH wakeup
         Log.d("Notifications" , "ArmTimer waking at: "+ new Date(wakeTime ) +" in " +
             (wakeTime - now) /60000d + " minutes");
-        if (wakeIntent != null)
+
+        if (wakeIntent == null) {
+            // TODO request code??
+            wakeIntent = PendingIntent.getService(this, 0, new Intent(this, this.getClass()), 0);
+        }
+        JoH.wakeUpIntent(context, wakeTime - now, wakeIntent);
+
+
+       /* if (wakeIntent != null)
             alarm.cancel(wakeIntent);
         wakeIntent = PendingIntent.getService(this, 0, new Intent(this, this.getClass()), 0);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -529,7 +527,7 @@ public class Notifications extends IntentService {
             alarm.setExact(AlarmManager.RTC_WAKEUP, wakeTime, wakeIntent);
         } else {
             alarm.set(AlarmManager.RTC_WAKEUP, wakeTime, wakeIntent);
-        }
+        }*/
     }
 
     private Bitmap createWearBitmap(long start, long end) {
@@ -560,7 +558,13 @@ public class Notifications extends IntentService {
                 .build();
     }*/
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    private boolean useOngoingChannel() {
+        return (Pref.getBooleanDefaultFalse("use_notification_channels") &&
+                Pref.getBooleanDefaultFalse("ongoing_notification_channel") &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O);
+    }
+
+    @TargetApi(Build.VERSION_CODES.O)
     public synchronized Notification createOngoingNotification(BgGraphBuilder bgGraphBuilder, Context context) {
         mContext = context;
         ReadPerfs(mContext);
@@ -582,8 +586,16 @@ public class Notifications extends IntentService {
 
         //final NotificationCompat.Builder b = new NotificationCompat.Builder(mContext, NotificationChannels.ONGOING_CHANNEL);
         //final NotificationCompat.Builder b = new NotificationCompat.Builder(mContext); // temporary fix until ONGOING CHANNEL is silent by default on android 8+
-        final Notification.Builder b = new Notification.Builder(mContext); // temporary fix until ONGOING CHANNEL is silent by default on android 8+
-        //b.setOngoing(true); // TODO CHECK THIS!!
+        //final Notification.Builder b = new Notification.Builder(mContext); // temporary fix until ONGOING CHANNEL is silent by default on android 8+
+        final Notification.Builder b;
+        if (useOngoingChannel()) {
+            b = new Notification.Builder(mContext, NotificationChannels.ONGOING_CHANNEL);
+            b.setSound(null);
+        } else {
+            b = new Notification.Builder(mContext);
+        }
+        b.setOngoing(true); // TODO CHECK THIS!!
+      
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             b.setVisibility(Pref.getBooleanDefaultFalse("public_notifications") ? Notification.VISIBILITY_PUBLIC : Notification.VISIBILITY_PRIVATE);
             b.setCategory(NotificationCompat.CATEGORY_STATUS);
@@ -600,14 +612,37 @@ public class Notifications extends IntentService {
                 .setSmallIcon(R.drawable.ic_action_communication_invert_colors_on)
                 .setUsesChronometer(false);
 
+        boolean setLargeIcon = false;
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             // in case the graphic crashes the system-ui we wont do it immediately after reboot so the
             // user has a chance to disable the feature
             if (SystemClock.uptimeMillis() > Constants.MINUTE_IN_MS * 15) {
                 if (NumberGraphic.numberIconEnabled()) {
                     if ((dg != null) && (!dg.isStale())) {
-                        final Bitmap icon_bitmap = NumberGraphic.getBitmap(dg.unitized);
+                        final Bitmap icon_bitmap = NumberGraphic.getSmallIconBitmap(dg.unitized);
                         if (icon_bitmap != null) b.setSmallIcon(Icon.createWithBitmap(icon_bitmap));
+
+                    }
+                }
+
+                if (NumberGraphic.largeWithArrowEnabled()) {
+                    if ((dg != null) && (!dg.isStale())) {
+                        final Bitmap icon_bitmap = NumberGraphic.getLargeWithArrowBitmap(dg.unitized, dg.delta_arrow);
+                        //if (icon_bitmap != null) b.setSmallIcon(Icon.createWithBitmap(icon_bitmap));
+                        if (icon_bitmap != null) {
+                            b.setLargeIcon(Icon.createWithBitmap(icon_bitmap));
+                            setLargeIcon = true;
+                        }
+                    }
+                } else if (NumberGraphic.largeNumberIconEnabled()) {
+                    if ((dg != null) && (!dg.isStale())) {
+                        final Bitmap icon_bitmap = NumberGraphic.getLargeIconBitmap(dg.unitized);
+                        //if (icon_bitmap != null) b.setSmallIcon(Icon.createWithBitmap(icon_bitmap));
+                        if (icon_bitmap != null) {
+                            b.setLargeIcon(Icon.createWithBitmap(icon_bitmap));
+                            setLargeIcon = true;
+                        }
                     }
                 }
             }
@@ -627,7 +662,7 @@ public class Notifications extends IntentService {
                     .setBgGraphBuilder(bgGraphBuilder)
                     .setBackgroundColor(getCol(X.color_notification_chart_background))
                     .build();
-            b.setLargeIcon(iconBitmap);
+            if (!setLargeIcon) b.setLargeIcon(iconBitmap);
             Notification.BigPictureStyle bigPictureStyle = new Notification.BigPictureStyle();
             notifiationBitmap = new BgSparklineBuilder(mContext)
                     .setBgGraphBuilder(bgGraphBuilder)
@@ -648,7 +683,8 @@ public class Notifications extends IntentService {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
             b.setLocalOnly(true);
         }
-        return b.build();
+        // strips channel ID if disabled
+        return XdripNotification.build(b);
     }
 
     private synchronized void bgOngoingNotification(final BgGraphBuilder bgGraphBuilder) {
@@ -715,7 +751,7 @@ public class Notifications extends IntentService {
         final double low_occurs_at = BgGraphBuilder.getCurrentLowOccursAt();
 
         if ((low_occurs_at > 0) && (BgGraphBuilder.last_noise < BgGraphBuilder.NOISE_TOO_HIGH_FOR_PREDICT)) {
-            final double low_predicted_alarm_minutes = Double.parseDouble(prefs.getString("low_predict_alarm_level", "40"));
+            final double low_predicted_alarm_minutes = JoH.tolerantParseDouble(prefs.getString("low_predict_alarm_level", "40"), 40);
             final double now = JoH.ts();
             final double predicted_low_in_mins = (low_occurs_at - now) / 60000;
             android.util.Log.d(TAG, "evaluateLowPredictionAlarm: mins: " + predicted_low_in_mins);
@@ -834,7 +870,7 @@ public class Notifications extends IntentService {
 
     public static void bgMissedAlert(Context context) {
         long otherAlertReraiseSec = MissedReadingService.getOtherAlertReraiseSec(context, "bg_missed_alerts");
-        OtherAlert(context, "bg_missed_alerts", "BG Readings Missed" + "  (@" + JoH.hourMinuteString() + ")", missedAlertNotificationId, NotificationChannels.BG_MISSED_ALERT_CHANNEL, true, otherAlertReraiseSec);
+        OtherAlert(context, "bg_missed_alerts", context.getString(R.string.bg_reading_missed) + "  (@" + JoH.hourMinuteString() + ")", missedAlertNotificationId, NotificationChannels.BG_MISSED_ALERT_CHANNEL, true, otherAlertReraiseSec);
     }
 
     public static void RisingAlert(Context context, boolean on) {
@@ -978,6 +1014,23 @@ public class Notifications extends IntentService {
         if (userNotification != null) {
             userNotification.delete();
             notificationDismiss(extraCalibrationNotificationId);
+        }
+    }
+
+    // rate limited
+    public static void start() {
+        // TODO consider how inevitable task could change dynamic of this instead of rate limit
+        if (JoH.ratelimit("start-notifications",10)) {
+            JoH.startService(Notifications.class);
+        }
+    }
+
+    // not rate limited - force recheck
+    public static void staticUpdateNotification() {
+        try {
+            JoH.startService(Notifications.class);
+        } catch (Exception e) {
+            Log.e(TAG, "Got exception in staticupdatenotification: " + e);
         }
     }
 }

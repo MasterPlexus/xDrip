@@ -53,6 +53,12 @@
                     android:key="skip_lan_uploads_when_no_lan"
                     android:summary="@string/skip_local_lan"
                     android:title="@string/skip_lan_uploads" />
+                
+                <CheckBoxPreference
+                    android:defaultValue="false"
+                    android:key="mongo_load_transmitter_data"
+                    android:summary="@string/mongo_load_transmitter_data_summary"
+                    android:title="@string/mongo_load_transmitter_data_title" />
 
             </PreferenceScreen>
 
@@ -122,6 +128,11 @@
                         android:key="warn_nightscout_failures"
                         android:summary="Display and sound a notification if Nightscout upload is failing."
                         android:title="Alert on failures" />
+                    <CheckBoxPreference
+                        android:defaultValue="false"
+                        android:key="nightscout_device_append_source_info"
+                        android:summary="For G5, sends collector type (e.g. OB1) and reading backfill status (for native) to Nightscout."
+                        android:title="Append source info to device name" />
                     <Preference
                         android:summary="Tap to send historical data to Nightscout"
                         android:title="Back-fill data">
@@ -232,6 +243,32 @@
                         android:targetPackage="@string/local_target_package" />
                 </Preference>
             </PreferenceScreen>
+            <PreferenceScreen
+                android:key="tidepool_upload_screen"
+                android:summary="Upload data to the Tidepool service"
+                android:title="Tidepool">
+
+                <SwitchPreference
+                    android:switchTextOff="@string/short_off_text_for_switches"
+                    android:switchTextOn="@string/short_on_text_for_switches"
+                    android:defaultValue="false"
+                    android:key="cloud_storage_tidepool_enable"
+                    android:title="Sync to Tidepool" />
+
+                <EditTextPreference
+                    android:key="tidepool_username"
+                    android:summary="Your Tidepool login user name, normally your email address"
+                    android:title="Login User Name" />
+                <EditTextPreference
+                    android:inputType="textPassword"
+                    android:key="tidepool_password"
+                    android:summary="Your Tidepool login password"
+                    android:title="Login Password" />
+                <Preference
+                    android:key="tidepool_test_login"
+                    android:title="Test Tidepool Login"></Preference>
+
+            </PreferenceScreen>
         </PreferenceScreen>
         <PreferenceScreen
             android:icon="@drawable/ic_touch_app_grey600_48dp"
@@ -275,7 +312,6 @@
                 android:title="@string/automatic_calibration" />
 
         </PreferenceScreen>
-
 
     </PreferenceCategory>
 

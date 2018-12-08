@@ -29,10 +29,30 @@ public class Constants {
     public static final int DEX_COLLECTION_SERVICE_FAILOVER_ID = 1003;
     public static final int SYNC_QUEUE_RETRY_ID = 1004;
     public static final int NUMBER_TEXT_TEST_ID = 1005;
+    public static final int MISSED_READING_SERVICE_ID = 1006;
+    public static final int G5_CALIBRATION_REQUEST = 1007;
+    public static final int G5_CALIBRATION_REJECT = 1008;
+    public static final int G5_START_REJECT = 1009;
+    public static final int G5_SENSOR_ERROR = 1010;
+    public static final int G5_SENSOR_FAILED = 1011;
+    public static final int G5_SENSOR_STARTED = 1012;
+    public static final int G5_SENSOR_RESTARTED = 1013;
+    public static final int G6_DEFAULTS_MESSAGE = 1014;
+    public static final int MEDTRUM_SERVICE_RETRY_ID = 1015;
+    public static final int MEDTRUM_SERVICE_FAILOVER_ID = 1016;
+    public static final int DESERT_MASTER_UNREACHABLE = 1017;
+    public static final int LEFUN_SERVICE_RETRY_ID = 1018;
+    public static final int LEFUN_SERVICE_FAILOVER_ID = 1019;
 
     static final int NIGHTSCOUT_ERROR_NOTIFICATION_ID = 2001;
 
     // increments from this start number
     public static final int INCOMPATIBLE_BASE_ID = 5000;
     public static final int COMPATIBLE_BASE_ID = 6000;
+    public static final int DEX_BASE_ID = 6400;
+
+    //
+    public static final int HEART_RATE_JOB_ID = 60920012;
+    public static final int APK_DOWNLOAD_JOB_ID = 60920014;
+
 }

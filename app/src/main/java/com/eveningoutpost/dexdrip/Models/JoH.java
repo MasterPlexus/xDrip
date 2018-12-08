@@ -3,6 +3,7 @@ package com.eveningoutpost.dexdrip.Models;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -19,6 +20,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -36,6 +38,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AlertDialog;
@@ -83,9 +86,11 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 import java.util.zip.Deflater;
@@ -104,6 +109,7 @@ import static com.eveningoutpost.dexdrip.stats.StatsActivity.SHOW_STATISTICS_PRI
 public class JoH {
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
     private final static String TAG = "jamorham JoH";
+    private final static int PAIRING_VARIANT_PASSKEY = 1; // hidden in api
     private final static boolean debug_wakelocks = false;
 
     private static double benchmark_time = 0;
@@ -111,6 +117,12 @@ public class JoH {
     private static final Map<String, Long> rateLimits = new HashMap<>();
 
     public static boolean buggy_samsung = false; // flag set when we detect samsung devices which do not perform to android specifications
+
+    // quick string conversion with leading zero
+    public static String qs0(double x, int digits) {
+        final String qs = qs(x, digits);
+        return qs.startsWith(".") ? "0" + qs : qs;
+    }
 
     // qs = quick string conversion of double for printing
     public static String qs(double x) {
@@ -160,10 +172,16 @@ public class JoH {
         return new Date().getTime();
     }
 
-    // TODO can we optimize this with System.currentTimeMillis ?
     public static long tsl() {
-        //return new Date().getTime();
         return System.currentTimeMillis();
+    }
+
+    public static long uptime() {
+        return SystemClock.uptimeMillis();
+    }
+
+    public static boolean upForAtLeastMins(int mins) {
+        return uptime() > Constants.MINUTE_IN_MS * mins;
     }
 
     public static long msSince(long when) {
@@ -180,13 +198,17 @@ public class JoH {
 
     public static String bytesToHex(byte[] bytes) {
         if (bytes == null) return "<empty>";
-        char[] hexChars = new char[bytes.length * 2];
+        final char[] hexChars = new char[bytes.length * 2];
         for (int j = 0; j < bytes.length; j++) {
-            int v = bytes[j] & 0xFF;
+            final int v = bytes[j] & 0xFF;
             hexChars[j * 2] = hexArray[v >>> 4];
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
+    }
+
+    public static byte[] tolerantHexStringToByteArray(String str) {
+        return hexStringToByteArray(str.toUpperCase().replaceAll("[^A-F0-9]",""));
     }
 
     public static byte[] hexStringToByteArray(String str) {
@@ -422,6 +444,21 @@ public class JoH {
         }
     }
 
+    public static void dumpBundle(Bundle bundle, String tag) {
+        if (bundle != null) {
+            for (String key : bundle.keySet()) {
+                Object value = bundle.get(key);
+                if (value != null) {
+                    UserError.Log.d(tag, String.format("%s %s (%s)", key,
+                            value.toString(), value.getClass().getName()));
+                }
+            }
+        } else {
+            UserError.Log.d(tag, "Bundle is empty");
+        }
+    }
+
+
     // compare stored byte array hashes
     public static synchronized boolean differentBytes(String name, byte[] bytes) {
         final String id = "differentBytes-" + name;
@@ -451,7 +488,7 @@ public class JoH {
         } else {
             rate_time = rateLimits.get(name);
         }
-        if ((rate_time > 0) && (time_now - rate_time) < (seconds * 1000)) {
+        if ((rate_time > 0) && (time_now - rate_time) < (seconds * 1000L)) {
             Log.d(TAG, name + " rate limited: " + seconds + " seconds");
             return false;
         }
@@ -464,7 +501,7 @@ public class JoH {
     // return true if below rate limit
     public static synchronized boolean ratelimit(String name, int seconds) {
         // check if over limit
-        if ((rateLimits.containsKey(name)) && (JoH.tsl() - rateLimits.get(name) < (seconds * 1000))) {
+        if ((rateLimits.containsKey(name)) && (JoH.tsl() - rateLimits.get(name) < (seconds * 1000L))) {
             Log.d(TAG, name + " rate limited: " + seconds + " seconds");
             return false;
         }
@@ -598,6 +635,10 @@ public class JoH {
         return android.text.format.DateFormat.format("yyyy-MM-dd", timestamp).toString();
     }
 
+    public static long getTimeZoneOffsetMs() {
+        return new GregorianCalendar().getTimeZone().getRawOffset();
+    }
+
     public static String niceTimeSince(long t) {
         return niceTimeScalar(msSince(t));
     }
@@ -608,27 +649,61 @@ public class JoH {
 
     // temporary
     public static String niceTimeScalar(long t) {
-        String unit = "second";
+        String unit = xdrip.getAppContext().getString(R.string.unit_second);
         t = t / 1000;
+        if (t != 1) unit = xdrip.getAppContext().getString(R.string.unit_seconds);
         if (t > 59) {
-            unit = "minute";
+            unit = xdrip.getAppContext().getString(R.string.unit_minute);
             t = t / 60;
+            if (t != 1) unit = xdrip.getAppContext().getString(R.string.unit_minutes);
             if (t > 59) {
-                unit = "hour";
+                unit = xdrip.getAppContext().getString(R.string.unit_hour);
                 t = t / 60;
+                if (t != 1) unit = xdrip.getAppContext().getString(R.string.unit_hours);
                 if (t > 24) {
-                    unit = "day";
+                    unit = xdrip.getAppContext().getString(R.string.unit_day);
                     t = t / 24;
+                    if (t != 1) unit = xdrip.getAppContext().getString(R.string.unit_days);
                     if (t > 28) {
-                        unit = "week";
+                        unit = xdrip.getAppContext().getString(R.string.unit_week);
                         t = t / 7;
+                        if (t != 1) unit = xdrip.getAppContext().getString(R.string.unit_weeks);
                     }
                 }
             }
         }
-        if (t != 1) unit = unit + "s";
+        //if (t != 1) unit = unit + "s"; //implemented plurality in every step, because in other languages plurality of time is not every time adding the same character
         return qs((double) t, 0) + " " + unit;
     }
+
+    public static String niceTimeScalar(double t, int digits) {
+        String unit = xdrip.getAppContext().getString(R.string.unit_second);
+        t = t / 1000;
+        if (t != 1) unit = xdrip.getAppContext().getString(R.string.unit_seconds);
+        if (t > 59) {
+            unit = xdrip.getAppContext().getString(R.string.unit_minute);
+            t = t / 60;
+            if (t != 1) unit = xdrip.getAppContext().getString(R.string.unit_minutes);
+            if (t > 59) {
+                unit = xdrip.getAppContext().getString(R.string.unit_hour);
+                t = t / 60;
+                if (t != 1) unit = xdrip.getAppContext().getString(R.string.unit_hours);
+                if (t > 24) {
+                    unit = xdrip.getAppContext().getString(R.string.unit_day);
+                    t = t / 24;
+                    if (t != 1) unit = xdrip.getAppContext().getString(R.string.unit_days);
+                    if (t > 28) {
+                        unit = xdrip.getAppContext().getString(R.string.unit_week);
+                        t = t / 7;
+                        if (t != 1) unit = xdrip.getAppContext().getString(R.string.unit_weeks);
+                    }
+                }
+            }
+        }
+        //if (t != 1) unit = unit + "s"; //implemented plurality in every step, because in other languages plurality of time is not every time adding the same character
+        return qs( t, digits) + " " + unit;
+    }
+
 
     public static String niceTimeScalarNatural(long t) {
         if (t > 3000000) t = t + 10000; // round up by 10 seconds if nearly an hour
@@ -645,9 +720,39 @@ public class JoH {
         return niceTimeScalar(t).replaceFirst("^1 ", "");
     }
 
+    public static String niceTimeScalarShort(long t) {
+        return niceTimeScalar(t).replaceFirst("([A-z]).*$", "$1");
+    }
+
+    public static String niceTimeScalarShortWithDecimalHours(long t) {
+        if (t > Constants.HOUR_IN_MS) {
+            return niceTimeScalar(t,1).replaceFirst("([A-z]).*$", "$1");
+        } else {
+            return niceTimeScalar(t).replaceFirst("([A-z]).*$", "$1");
+        }
+    }
+
+
     public static double tolerantParseDouble(String str) throws NumberFormatException {
         return Double.parseDouble(str.replace(",", "."));
+    }
 
+    public static double tolerantParseDouble(final String str, final double def) {
+        if (str == null) return def;
+        try {
+            return Double.parseDouble(str.replace(",", "."));
+        } catch (NumberFormatException e) {
+            return def;
+        }
+    }
+
+    public static int tolerantParseInt(final String str, final int def) {
+        if (str == null) return def;
+        try {
+            return Integer.parseInt(str);
+        } catch (NumberFormatException e) {
+            return def;
+        }
     }
 
     public static String getRFC822String(long timestamp) {
@@ -657,7 +762,7 @@ public class JoH {
 
     public static PowerManager.WakeLock getWakeLock(final String name, int millis) {
         final PowerManager pm = (PowerManager) xdrip.getAppContext().getSystemService(Context.POWER_SERVICE);
-        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, name);
+        final PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, name);
         wl.acquire(millis);
         if (debug_wakelocks) Log.d(TAG, "getWakeLock: " + name + " " + wl.toString());
         return wl;
@@ -853,29 +958,34 @@ public class JoH {
         static_toast(context, msg, Toast.LENGTH_LONG);
     }
 
-    public static void show_ok_dialog(final Activity activity, String title, String message, final Runnable runnable) {
-        try {
-            AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(activity, R.style.AppTheme));
-            builder.setTitle(title);
-            builder.setMessage(message);
-            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    try {
-                        dialog.dismiss();
-                    } catch (Exception e) {
-                        //
-                    }
-                    if (runnable != null) {
-                        runOnUiThreadDelayed(runnable, 10);
-                    }
-                }
-            });
+    public static void show_ok_dialog(final Activity activity, final String title, final String message, final Runnable runnable) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(activity, R.style.AppTheme));
+                    builder.setTitle(title);
+                    builder.setMessage(message);
+                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            try {
+                                dialog.dismiss();
+                            } catch (Exception e) {
+                                //
+                            }
+                            if (runnable != null) {
+                                runOnUiThreadDelayed(runnable, 10);
+                            }
+                        }
+                    });
 
-            builder.create().show();
-        } catch (Exception e) {
-            Log.wtf(TAG, "show_dialog exception: " + e);
-            static_toast_long(message);
-        }
+                    builder.create().show();
+                } catch (Exception e) {
+                    Log.wtf(TAG, "show_dialog exception: " + e);
+                    static_toast_long(message);
+                }
+            }
+        });
     }
 
     public static synchronized void playResourceAudio(int id) {
@@ -899,6 +1009,10 @@ public class JoH {
         }
     }
 
+    public static boolean validateMacAddress(final String mac) {
+        return mac != null && mac.length() == 17 && mac.matches("([\\da-fA-F]{1,2}(?:\\:|$)){6}");
+    }
+
     public static String urlEncode(String source) {
         try {
             return URLEncoder.encode(source, "UTF-8");
@@ -920,9 +1034,35 @@ public class JoH {
         }
     }
 
+    public static void stopService(Class c) {
+        xdrip.getAppContext().stopService(new Intent(xdrip.getAppContext(), c));
+    }
+
     public static void startService(Class c) {
         xdrip.getAppContext().startService(new Intent(xdrip.getAppContext(), c));
     }
+
+    public static void startService(final Class c, final String... args) {
+        final Intent intent = new Intent(xdrip.getAppContext(), c);
+        if (args.length % 2 == 1) {
+            throw new RuntimeException("Odd number of args for JoH.startService");
+        }
+        for (int i = 0; i < args.length; i += 2) {
+            intent.putExtra(args[i], args[i + 1]);
+        }
+        xdrip.getAppContext().startService(intent);
+    }
+
+
+    public static void startActivity(Class c) {
+        xdrip.getAppContext().startActivity(getStartActivityIntent(c));
+    }
+
+
+    public static Intent getStartActivityIntent(Class c) {
+        return new Intent(xdrip.getAppContext(), c).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    }
+
 
     public static void goFullScreen(boolean fullScreen, View decorView) {
 
@@ -1088,8 +1228,12 @@ public class JoH {
     }
 
     public static void cancelNotification(int notificationId) {
-        final NotificationManager mNotifyMgr = (NotificationManager) xdrip.getAppContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotifyMgr.cancel(notificationId);
+        try {
+            final NotificationManager mNotifyMgr = (NotificationManager) xdrip.getAppContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            mNotifyMgr.cancel(notificationId);
+        } catch (Exception e) {
+            //
+        }
     }
 
     public static void showNotification(String title, String content, PendingIntent intent, int notificationId, boolean sound, boolean vibrate, boolean onetime) {
@@ -1181,6 +1325,12 @@ public class JoH {
         }
     }
 
+    public static boolean areWeRunningOnAndroidWear() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH
+                && (xdrip.getAppContext().getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_WATCH;
+    }
+
     public static boolean isAirplaneModeEnabled(Context context) {
         return Settings.Global.getInt(context.getContentResolver(), Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
     }
@@ -1208,12 +1358,17 @@ public class JoH {
     }
 
     @TargetApi(19)
-    public static boolean doPairingRequest(Context context, BroadcastReceiver broadcastReceiver, Intent intent, String mBluetoothDeviceAddress, String pinHint) {
+    public static boolean doPairingRequest(Context context, BroadcastReceiver broadcastReceiver, Intent intent, final String mBluetoothDeviceAddress, final String pinHint) {
         if (BluetoothDevice.ACTION_PAIRING_REQUEST.equals(intent.getAction())) {
             final BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
             if (device != null) {
                 int type = intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_VARIANT, BluetoothDevice.ERROR);
                 if ((mBluetoothDeviceAddress != null) && (device.getAddress().equals(mBluetoothDeviceAddress))) {
+
+                    if (type == PAIRING_VARIANT_PASSKEY && pinHint != null) {
+                        return false;
+                    }
+
                     if ((type == PAIRING_VARIANT_PIN) && (pinHint != null)) {
                         device.setPin(convertPinToBytes(pinHint));
                         Log.d(TAG, "Setting pairing pin to " + pinHint);
@@ -1221,12 +1376,12 @@ public class JoH {
                     }
                     try {
                         UserError.Log.e(TAG, "Pairing type: " + type);
-                        if (type != PAIRING_VARIANT_PIN) {
+                        if (type != PAIRING_VARIANT_PIN && type != PAIRING_VARIANT_PASSKEY) {
                             device.setPairingConfirmation(true);
                             JoH.static_toast_short("xDrip Pairing");
                             broadcastReceiver.abortBroadcast();
                         } else {
-                            Log.d(TAG,"Attempting to passthrough PIN pairing");
+                            Log.d(TAG, "Attempting to passthrough PIN pairing");
                         }
 
                     } catch (Exception e) {
@@ -1356,6 +1511,39 @@ public class JoH {
         }.start();
     }
 
+
+    public static synchronized void unBond(String transmitterMAC) {
+
+        UserError.Log.d(TAG, "unBond() start");
+        if (transmitterMAC == null) return;
+        try {
+            final BluetoothAdapter mBluetoothAdapter = ((BluetoothManager) xdrip.getAppContext().getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
+
+            final Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+            if (pairedDevices.size() > 0) {
+                for (BluetoothDevice device : pairedDevices) {
+                    if (device.getAddress() != null) {
+                        if (device.getAddress().equals(transmitterMAC)) {
+                            try {
+                                UserError.Log.e(TAG, "removingBond: " + transmitterMAC);
+                                Method m = device.getClass().getMethod("removeBond", (Class[]) null);
+                                m.invoke(device, (Object[]) null);
+
+                            } catch (Exception e) {
+                                UserError.Log.e(TAG, e.getMessage(), e);
+                            }
+                        }
+
+                    }
+                }
+            }
+        } catch (Exception e) {
+            UserError.Log.e(TAG, "Exception during unbond! " + transmitterMAC, e);
+        }
+        UserError.Log.d(TAG, "unBond() finished");
+    }
+
+
     public static Map<String, String> bundleToMap(Bundle bundle) {
         final HashMap<String, String> map = new HashMap<>();
         for (String key : bundle.keySet()) {
@@ -1388,6 +1576,8 @@ public class JoH {
         return crc.getValue();
     }
 
+
+
     public static byte[] bchecksum(byte[] bytes) {
         final long c = checksum(bytes);
         final byte[] buf = new byte[4];
@@ -1412,74 +1602,37 @@ public class JoH {
        }
     }
 
-    public static double roundDouble(double value, int places) {
+    public static double roundDouble(final double value, int places) {
         if (places < 0) throw new IllegalArgumentException("Invalid decimal places");
         BigDecimal bd = new BigDecimal(value);
         bd = bd.setScale(places, RoundingMode.HALF_UP);
         return bd.doubleValue();
     }
-    
-    
-    private final static long[] crc16table = {
-            0, 4489, 8978, 12955, 17956, 22445, 25910, 29887, 35912,
-            40385, 44890, 48851, 51820, 56293, 59774, 63735, 4225, 264,
-            13203, 8730, 22181, 18220, 30135, 25662, 40137, 36160, 49115,
-            44626, 56045, 52068, 63999, 59510, 8450, 12427, 528, 5017,
-            26406, 30383, 17460, 21949, 44362, 48323, 36440, 40913, 60270,
-            64231, 51324, 55797, 12675, 8202, 4753, 792, 30631, 26158,
-            21685, 17724, 48587, 44098, 40665, 36688, 64495, 60006, 55549,
-            51572, 16900, 21389, 24854, 28831, 1056, 5545, 10034, 14011,
-            52812, 57285, 60766, 64727, 34920, 39393, 43898, 47859, 21125,
-            17164, 29079, 24606, 5281, 1320, 14259, 9786, 57037, 53060,
-            64991, 60502, 39145, 35168, 48123, 43634, 25350, 29327, 16404,
-            20893, 9506, 13483, 1584, 6073, 61262, 65223, 52316, 56789,
-            43370, 47331, 35448, 39921, 29575, 25102, 20629, 16668, 13731,
-            9258, 5809, 1848, 65487, 60998, 56541, 52564, 47595, 43106,
-            39673, 35696, 33800, 38273, 42778, 46739, 49708, 54181, 57662,
-            61623, 2112, 6601, 11090, 15067, 20068, 24557, 28022, 31999,
-            38025, 34048, 47003, 42514, 53933, 49956, 61887, 57398, 6337,
-            2376, 15315, 10842, 24293, 20332, 32247, 27774, 42250, 46211,
-            34328, 38801, 58158, 62119, 49212, 53685, 10562, 14539, 2640,
-            7129, 28518, 32495, 19572, 24061, 46475, 41986, 38553, 34576,
-            62383, 57894, 53437, 49460, 14787, 10314, 6865, 2904, 32743,
-            28270, 23797, 19836, 50700, 55173, 58654, 62615, 32808, 37281,
-            41786, 45747, 19012, 23501, 26966, 30943, 3168, 7657, 12146,
-            16123, 54925, 50948, 62879, 58390, 37033, 33056, 46011, 41522,
-            23237, 19276, 31191, 26718, 7393, 3432, 16371, 11898, 59150,
-            63111, 50204, 54677, 41258, 45219, 33336, 37809, 27462, 31439,
-            18516, 23005, 11618, 15595, 3696, 8185, 63375, 58886, 54429,
-            50452, 45483, 40994, 37561, 33584, 31687, 27214, 22741, 18780,
-            15843, 11370, 7921, 3960 };
 
-    // first two bytes = crc16 included in data
-    static long computeCRC16(byte[] data, int start, int size){
-        long crc = 0xffff;
-        for (int i = start + 2; i < start + size; i++) {
-            crc = ((crc >> 8) ^ crc16table[(int)(crc ^   (data[i] & 0xFF) ) & 0xff]);
-        }
-        
-        long reverseCrc = 0;
-        for (int i=0; i <16; i++) {
-            reverseCrc = (reverseCrc << 1) | (crc & 1);
-            crc >>= 1;
-        }
-        return reverseCrc;
+    public static double roundFloat(final float value, int places) {
+        if (places < 0) throw new IllegalArgumentException("Invalid decimal places");
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(places, RoundingMode.HALF_UP);
+        return bd.floatValue();
     }
 
-    static boolean CheckCRC16(byte[] data, int start, int size) {
-        long crc = computeCRC16(data, start, size);
-        return crc == ((data[start+1]& 0xFF) * 256 + (data[start] & 0xff)); 
-    }
-    
-    public static boolean LibreCrc(byte[] data) {
-        if(data.length < 344) {
-            Log.e(TAG, "Must have at least 344 bytes for libre data");
+    public static boolean isServiceRunningInForeground(Class<?> serviceClass) {
+        final ActivityManager manager = (ActivityManager) xdrip.getAppContext().getSystemService(Context.ACTIVITY_SERVICE);
+        try {
+            for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+                if (serviceClass.getName().equals(service.service.getClassName())) {
+                    return service.foreground;
+                }
+            }
+            return false;
+        } catch (NullPointerException e) {
             return false;
         }
-        boolean cheksum_ok = CheckCRC16(data, 0 ,24);
-        cheksum_ok &= CheckCRC16(data, 24 ,296);
-        cheksum_ok &= CheckCRC16(data, 320 ,24);
-        return cheksum_ok;
-        
     }
+
+    public static boolean emptyString(final String str) {
+        return str == null || str.length() == 0;
+    }
+
+
 }

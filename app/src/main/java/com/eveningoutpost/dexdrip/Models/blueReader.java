@@ -15,6 +15,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.regex.*;
 
 import static com.eveningoutpost.dexdrip.utils.FileUtils.getExternalDir;
 import static com.eveningoutpost.dexdrip.utils.FileUtils.makeSureDirectoryExists;
@@ -28,12 +29,12 @@ public class blueReader {
     private static final String TAG = "blueReader";
     private static final String BatLog="/BatteryLog.csv";
     private static int counterHibernated = 0;
-    private static String tempVers="";
+    private static Matcher tempVers;
 
-    private final static byte[] shutdown = new byte[]{0x6B};
-    private final static byte[] requestValue = new byte[]{0x6C};
-    private final static byte[] goHybernate = new byte[]{0x68};
-    private final static byte[] restart = new byte[]{0x79};
+    private static final byte[] shutdown = new byte[]{0x6B};        // Char 'k'
+    private static final byte[] requestValue = new byte[]{0x6C};    // Char 'l'
+    private static final byte[] goHybernate = new byte[]{0x68};     // Char 'h'
+    private static final byte[] restart = new byte[]{0x79};         // Char 'y'
 
 
     public static boolean isblueReader() {
@@ -70,7 +71,7 @@ public class blueReader {
         if (bufferstring.startsWith("not ready for") ) { //delete the trans_failed, because its normal only if the bluereader could not read the sensor.
             counterHibernated++;
             Log.e(TAG, "Found blueReader in a ugly State (" + counterHibernated + "/3), send hibernate to reset! If this does not help in the next 5 Minutes, then turn the bluereader manually off and on!");
-            if (counterHibernated > (int)2) {
+            if (counterHibernated > 2) {
                 Log.wtf(TAG, "Ugly state not resolveable. Bluereader will be shut down! Please restart it!");
                 Home.toaststatic("BlueReader ugly state not resolveable, bluereader will be shut down. Please restart it!");
                 if (!Pref.getBooleanDefaultFalse("blueReader_suppressuglystatemsg")) {
@@ -84,9 +85,9 @@ public class blueReader {
         } else if (bufferstring.startsWith("IDR")){
             Log.i(TAG, bufferstring);
             PersistentStore.setString("blueReaderFirmware", bufferstring );
-            tempVers=bufferstring;
-            tempVers.matches("(?i).*\\|blue(.*)-.*");
-            PersistentStore.setDouble("blueReaderFirmwareValue",Double.parseDouble(tempVers));
+            tempVers=Pattern.compile(".*\\|blue(.*)-.*").matcher(bufferstring);
+            tempVers.find();
+            PersistentStore.setDouble("blueReaderFirmwareValue",Double.parseDouble(tempVers.group(1)));
             Log.i(TAG, "bluereader-Firmware-Version: " + tempVers);
             if (BgReading.last() == null || BgReading.last().timestamp + (4 * 60 * 1000) < System.currentTimeMillis()) {
                 return requestValue;
@@ -107,7 +108,7 @@ public class blueReader {
             return null;
         } else if (bufferstring.startsWith("HYBERNATE SUCCESS")) {
             Log.i (TAG, "blueReader notice that NFC is now really hibernated...");
-            if (counterHibernated > (int)0) {
+            if (counterHibernated > 0) {
                 Log.w (TAG,"Found hibernation after wrong read. Resend read-command...");
                 return requestValue;
             } else {
@@ -159,9 +160,10 @@ public class blueReader {
             PersistentStore.setLong("blueReader_Full_Battery", transmitterData.sensor_battery_level);
             Log.i(TAG, "blueReader_Full_Battery set to: " + transmitterData.sensor_battery_level) ;
         }
-        Pref.setInt("bridge_battery", ((transmitterData.sensor_battery_level - 3300) * 100 / (((int) (long) PersistentStore.getLong("blueReader_Full_Battery"))-3300)));
-        sensor.latest_battery_level = ((transmitterData.sensor_battery_level - 3300) * 100 / (((int) (long) PersistentStore.getLong("blueReader_Full_Battery"))-3300));
-        blueReaderDays = 6.129200670865791d / (1d + Math.pow(((double)transmitterData.sensor_battery_level/3763.700630306379d),(-61.04241888028577d)));
+        int localBridgeBattery =((transmitterData.sensor_battery_level - 3300) * 100 / (((int) (long) PersistentStore.getLong("blueReader_Full_Battery"))-3300));
+        Pref.setInt("bridge_battery", localBridgeBattery);
+        sensor.latest_battery_level = localBridgeBattery;
+        blueReaderDays = 6.129200670865791d / (1d + Math.pow(((double)transmitterData.sensor_battery_level/3763.700630306379d),(-61.04241888028577d))); //todo compare with test-formular, and new Data of batterylog
         if (transmitterData.sensor_battery_level < 3600) {
             blueReaderDays=blueReaderDays + 0.1d;
         }
