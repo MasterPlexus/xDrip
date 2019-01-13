@@ -31,13 +31,13 @@
         android:layout_height="match_parent"
         tools:context="com.eveningoutpost.dexdrip.Home">
 
-        <!-- As the main content view, the view below consumes the entire
+        <!-- As the main content view, the view below consums the entire
              space available using match_parent in both dimensions. -->
 
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:background="#212121"
+            android:background="@color/new_dark"
             android:orientation="vertical"
             android:padding="0dp">
 
