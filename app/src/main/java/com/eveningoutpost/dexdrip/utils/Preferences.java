@@ -1,6 +1,7 @@
 package com.eveningoutpost.dexdrip.utils;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
@@ -896,6 +897,7 @@ public class Preferences extends BasePreferenceActivity {
                     return true;
             });
 
+            final Preference nsFollowDownload = findPreference("nsfollow_download_treatments");
             final Preference nsFollowUrl = findPreference("nsfollow_url");
             try {
                 nsFollowUrl.setOnPreferenceChangeListener((preference, newValue) -> {
@@ -909,6 +911,9 @@ public class Preferences extends BasePreferenceActivity {
             final Preference inpen_enabled = findPreference("inpen_enabled");
             try {
                 inpen_enabled.setOnPreferenceChangeListener((preference, newValue) -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && (boolean) newValue) {
+                        LocationHelper.requestLocationForBluetooth((Activity) preference.getContext()); // double check!
+                    }
                     InPenEntry.startWithRefresh();
                     return true;
                 });
@@ -1208,6 +1213,7 @@ public class Preferences extends BasePreferenceActivity {
             if (collectionType != DexCollectionType.NSFollow) {
                 try {
                     collectionCategory.removePreference(nsFollowUrl);
+                    collectionCategory.removePreference(nsFollowDownload);
                 } catch (Exception e) {
                     //
                 }
@@ -1824,6 +1830,7 @@ public class Preferences extends BasePreferenceActivity {
 
                     if (collectionType == DexCollectionType.NSFollow) {
                         collectionCategory.addPreference(nsFollowUrl);
+                        collectionCategory.addPreference(nsFollowDownload);
                     }
 
 
