@@ -240,7 +240,12 @@ public class DexCollectionService extends Service implements BtCallBack {
         if (mBluetoothGatt == null) {
             //gregorybel: no needs to continue if Gatt is null!
             UserError.Log.e(TAG, "gregorybel: force disconnect!");
-            handleDisconnectedStateChange();
+            if (blueReader.isblueReader()) {
+                UserError.Log.e(TAG, "bluereader stopped disconnect!");
+            } else {
+                handleDisconnectedStateChange();
+            }
+
         }
     }
 
