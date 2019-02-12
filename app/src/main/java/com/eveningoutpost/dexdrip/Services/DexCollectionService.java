@@ -1456,6 +1456,15 @@ public class DexCollectionService extends Service implements BtCallBack {
                         boolean result = mBluetoothGatt != null && mBluetoothGatt.writeCharacteristic(resendCharacteristic);
                         if (!result) {
                             UserError.Log.e(TAG, "Error writing characteristic: (2nd try) " + resendCharacteristic.getUuid() + " " + JoH.bytesToHex(value));
+                            if(Pref.getBoolean("blueReader_extralog", false)) {
+                                UserError.Log.e(TAG, "Extralog-Value:" + value);
+                                UserError.Log.e(TAG, "Extralog-isCollecting:" + isCollecting());
+                                UserError.Log.e(TAG, "Extralog-isRunning:" + isRunning());
+                                UserError.Log.e(TAG, "Extralog-isBluereader:" + blueReader.isblueReader());
+                                UserError.Log.e(TAG, "Extralog-isBluekon:" + static_use_blukon);
+                                UserError.Log.e(TAG, "Extralog-LimitterHardwarename:" + getBestLimitterHardwareName());
+                                UserError.Log.e(TAG, "Extralog-mConnectionState:" + mConnectionState);
+                            }
                         } else {
                             UserError.Log.d(TAG, "Succeeded writing characteristic: (2nd try) " + resendCharacteristic.getUuid() + " " + JoH.bytesToHex(value));
                         }

@@ -826,6 +826,11 @@
                 android:key="blueReader_writebatterylog"
                 android:summary="@string/summary_write_Battery_Information_for_additional_analytic"
                 android:title="@string/title_Batterylog" />
+            <SwitchPreference
+                android:defaultValue="false"
+                android:key="blueReader_extralog"
+                android:summary="Extralog fuermich zur bluetoothanalyse"
+                android:title="Bluetooth extralog" />
         </PreferenceScreen>
             <CheckBoxPreference
                 android:defaultValue="true"
