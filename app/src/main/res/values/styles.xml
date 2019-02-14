@@ -24,7 +24,7 @@
     <style name="AppThemeToolBarLite" parent="Theme.AppCompat.NoActionBar">
         <item name="android:actionBarStyle">@style/MyActionBar</item>
         <item name="android:textColor">@android:color/white</item>
-        <item name="android:background">#000000</item>
+        <!--<item name="android:background">#000000</item> -->
     </style>
 
     <style name="Toolbar">
