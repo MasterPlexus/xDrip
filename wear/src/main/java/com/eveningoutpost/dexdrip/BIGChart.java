@@ -77,7 +77,7 @@ public class BIGChart extends WatchFace implements SharedPreferences.OnSharedPre
     public int highColor = Color.YELLOW;
     public int lowColor = Color.RED;
     public int midColor = Color.WHITE;
-    public int pointSize = 2;
+    public int pointSize = 1;
     public boolean lowResMode = false;
     public boolean layoutSet = false;
     public int missed_readings_alert_id = 818;
@@ -715,7 +715,7 @@ public class BIGChart extends WatchFace implements SharedPreferences.OnSharedPre
             highColor = ContextCompat.getColor(getApplicationContext(), R.color.dark_midColor);
             lowColor = ContextCompat.getColor(getApplicationContext(), R.color.dark_midColor);
             midColor = ContextCompat.getColor(getApplicationContext(), R.color.dark_midColor);
-            pointSize = 2;
+            pointSize = 1;
             setupCharts();
         }
 
@@ -746,7 +746,7 @@ public class BIGChart extends WatchFace implements SharedPreferences.OnSharedPre
             highColor = ContextCompat.getColor(getApplicationContext(), R.color.dark_highColor);
             lowColor = ContextCompat.getColor(getApplicationContext(), R.color.dark_lowColor);
             midColor = ContextCompat.getColor(getApplicationContext(), R.color.dark_midColor);
-            pointSize = 2;
+            pointSize = 1;
             setupCharts();
         }
 
@@ -780,7 +780,7 @@ public class BIGChart extends WatchFace implements SharedPreferences.OnSharedPre
                 highColor = ContextCompat.getColor(getApplicationContext(), R.color.light_highColor);
                 lowColor = ContextCompat.getColor(getApplicationContext(), R.color.light_lowColor);
                 midColor = ContextCompat.getColor(getApplicationContext(), R.color.light_midColor);
-                pointSize = 2;
+                pointSize = 1;
                 setupCharts();
             }
         } else {
