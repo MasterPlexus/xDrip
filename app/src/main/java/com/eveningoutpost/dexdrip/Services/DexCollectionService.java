@@ -616,7 +616,7 @@ public class DexCollectionService extends Service implements BtCallBack {
                     if (getBestLimitterHardwareName() == "LimiTTer" || blueReader.isblueReader() || getBestLimitterHardwareName() == "SweetReader" || static_use_blukon || Blukon.expectingBlukonDevice()) {
                         // TODO applicable for other devices?
                         if (JoH.ratelimit("null-ccd-retry", 300)) {
-                            Log.d(TAG, "Refresh result state close: " + JoH.refreshDeviceCache(TAG, mBluetoothGatt));
+                            Log.d(TAG, "Refresh result state close of '" + getBestLimitterHardwareName() + "': " + JoH.refreshDeviceCache(TAG, mBluetoothGatt));
                             setRetryTimer();
                         }
                     }
