@@ -613,7 +613,7 @@ public class DexCollectionService extends Service implements BtCallBack {
                     }
                 } catch (NullPointerException e) {
                     Log.e(TAG, "Got null pointer trying to set CCCD descriptor");
-                    if (static_use_blukon || Blukon.expectingBlukonDevice()) {
+                    if (getBestLimitterHardwareName() == "LimiTTer" || blueReader.isblueReader() || getBestLimitterHardwareName() == "SweetReader" || static_use_blukon || Blukon.expectingBlukonDevice()) {
                         // TODO applicable for other devices?
                         if (JoH.ratelimit("null-ccd-retry", 300)) {
                             Log.d(TAG, "Refresh result state close: " + JoH.refreshDeviceCache(TAG, mBluetoothGatt));
