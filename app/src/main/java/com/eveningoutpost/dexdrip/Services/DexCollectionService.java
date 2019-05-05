@@ -295,20 +295,20 @@ public class DexCollectionService extends Service implements BtCallBack {
             // TODO should we allow close when trusting auto-connect?
             if (prefs.getBoolean("close_gatt_on_ble_disconnect", true)) {
                 if (mBluetoothGatt != null) {
-                    Log.i(TAG, "onConnectionStateChange: mBluetoothGatt is not null, closing.");
+                    Log.e(TAG, "onConnectionStateChange: mBluetoothGatt is not null, closing.");
                     if (JoH.ratelimit("refresh-gatt", 60)) {
-                        Log.d(TAG, "Refresh result state close: " + JoH.refreshDeviceCache(TAG, mBluetoothGatt));
+                        Log.e(TAG, "Refresh result state close: " + JoH.refreshDeviceCache(TAG, mBluetoothGatt));
                     }
                     mBluetoothGatt.close();
                     mBluetoothGatt = null;
                     mCharacteristic = null;
                     servicesDiscovered = DISCOVERED.NULL;
                 } else {
-                    Log.d(TAG, "mBluetoothGatt is null so not closing");
+                    Log.e(TAG, "mBluetoothGatt is null so not closing");
                 }
                 lastdata = null;
             } else {
-                UserError.Log.d(TAG, "Not closing gatt on bluetooth disconnect");
+                UserError.Log.e(TAG, "Not closing gatt on bluetooth disconnect");
             }
             Log.i(TAG, "onConnectionStateChange: Disconnected from GATT server.");
             setRetryTimer();
@@ -1598,6 +1598,10 @@ public class DexCollectionService extends Service implements BtCallBack {
             Log.d(TAG, "Sending reply message");
             sendBtMessage(byteBuffer);
         }
+    }
+
+    public static synchronized void cleanupGatt() {
+        Log.e(TAG, "Refresh result state close: " + JoH.refreshDeviceCache(TAG, mBluetoothGatt));
     }
 
     public synchronized void setSerialDataToTransmitterRawData(byte[] buffer, int len) {

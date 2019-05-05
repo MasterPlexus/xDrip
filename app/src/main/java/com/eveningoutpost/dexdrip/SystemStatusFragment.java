@@ -73,6 +73,7 @@ public class SystemStatusFragment extends Fragment {
     private TextView notes;
     private Button restart_collection_service;
     private Button forget_device;
+    private Button restart_gatt_device;
     private Button futureDataDeleteButton;
     private ImageButton refresh;
     private SharedPreferences prefs;
@@ -184,6 +185,7 @@ public class SystemStatusFragment extends Fragment {
 
         restart_collection_service = (Button) v.findViewById(R.id.restart_collection_service);
         forget_device = (Button) v.findViewById(R.id.forget_device);
+        restart_gatt_device = (Button) v.findViewById(R.id.restart_gatt_device);
         refresh = (ImageButton) v.findViewById(R.id.refresh_current_values);
         futureDataDeleteButton = (Button) v.findViewById(R.id.delete_future_data);
 
@@ -468,7 +470,13 @@ public class SystemStatusFragment extends Fragment {
             }
         });
     }
-
+    private void rstartgattDeviceListener() {
+        restart_gatt_device.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                DexCollectionService.cleanupGatt();
+            }
+        });
+    }
     private void forgetDeviceListener() {
         forget_device.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
