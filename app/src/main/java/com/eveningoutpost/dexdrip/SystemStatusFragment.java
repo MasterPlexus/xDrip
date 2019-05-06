@@ -214,6 +214,7 @@ public class SystemStatusFragment extends Fragment {
         restartButtonListener();
         forgetDeviceListener();
         refreshButtonListener();
+        restartgattDeviceListener();
     }
 
     //@Override
@@ -470,7 +471,7 @@ public class SystemStatusFragment extends Fragment {
             }
         });
     }
-    private void rstartgattDeviceListener() {
+    private void restartgattDeviceListener() {
         restart_gatt_device.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 DexCollectionService.cleanupGatt();
