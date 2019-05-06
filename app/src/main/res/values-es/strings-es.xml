@@ -82,9 +82,6 @@
     <string name="pref_amazfit_enable_summary">Habilita soporte para Amazfit</string>
     <string name="pref_amazfit_enable">Habilitar</string>
     <string name="pref_amazfit_tile">Servicio Amazfit</string>
-    <string name="pref_amazfit_alarm_enable_summary">Envía alarmas al Smartwatch y silencia el teléfono</string>
-    <string name="pref_amazfit_alarm_enable">Habilitar</string>
-    <string name="pref_amazfit_alarm_tile">Alarma en reloj</string>
     <string name="toast_crash">Algo salió mal :( un informe ha sido enviado para ayudar a solucionar el problema.</string>
     <string name="taskerConfigInstruction">Basta con hacer clic en el icono Tick aquí para confirmar. No debería ser necesario cambiar la cadena de configuración.</string>
     <string name="taskerConfiguration">Configuración Tasker</string>
@@ -258,7 +255,6 @@
     <string name="start_snoozed">Iniciar Silenciado</string>
     <string name="adjust_all_by_a_factor">Ajustar todos por un factor</string>
     <string name="reset">Reset</string>
-    <string name="pebble_and_android_wear_options">Opciones Pebble y AndroidWear</string>
     <string name="customize_colours">Personalizar los colores</string>
     <string name="xdrip_plus_color_settings">xDrip+ Ajustes de color</string>
     <string name="glucose_values_and_lines">Valores de glucosa y Líneas</string>
@@ -665,7 +661,6 @@
     <string name="minimum_value">Máximo valor considerado en rango</string>
     <string name="volume_buttons_snooze">Al presionar el botón de subir o bajar el volumen se apaga una alarma activa cuando estás dentro de la aplicación</string>
     <string name="buttons_silence_alarms">Botones silencian alarmas</string>
-    <string name="create_shortcut">Crea un acceso directo desde la pantalla principal a la pantalla de nivel de glucosa</string>
     <string name="shortcut_to_bg_alerts">Acceso directo a las alertas de nivel de glucosa</string>
     <string name="alert_calibration_request">Alerta cuando se requiera calibración</string>
     <string name="calibrations_request_time_time_difference">Cuántas horas entre las solicitudes de calibración</string>
@@ -797,7 +792,6 @@
     <string name="bluereader_turnoff">Apagado de seguridad</string>
     <string name="blueReader_turnoffvalue">Valor en %</string>
     <string name="blueReader_turnoffvalue_sum">donde se apagará el Bluereader</string>
-    <string name="days">días restantes</string>
     <string name="bluereaderoff">blueReader se apagará, como la batería es más baja entonces </string>
     <string name="bluereader_position">verifica la posición del blueReader en el sensor, ¡ya que no se pudo leer!</string>
     <string name="bluereaderuglystate">El blueReader fué encontrador en estado penoso! Se debe apagar ahora y debes volver a encenderlo (presiona brevemente el botón). Después de eso el BlueReader debería funcionar como se espera!</string>
@@ -992,7 +986,6 @@
     <string name="not_connected">No Conectado</string>
     <string name="no_data">No hay datos</string>
     <string name="no_bluetooth">No hay Bluetooth</string>
-    <string name="connection_status">Estado de la conexión:   </string>
     <string name="without_location_scan_doesnt_work">Sin el permiso de ubicación el escaneo Bluetooth de Android no funciona</string>
     <string name="without_location_permission_emergency_cannot_get_location">Sin permiso de ubicación los mensajes de emergencia no pueden utilizar datos de ubicación</string>
     <string name="please_allow_permission">Por favor, concede permiso</string>

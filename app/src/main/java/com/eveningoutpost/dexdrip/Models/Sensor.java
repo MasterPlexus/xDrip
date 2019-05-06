@@ -19,6 +19,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -270,5 +271,14 @@ public class Sensor extends Model {
         }
     }
 
+
+    public static void shutdownAllSensors() {
+        final List<Sensor> l = new Select().from(Sensor.class).execute();
+        for (final Sensor s : l) {
+            s.stopped_at = s.started_at;
+            s.save();
+            System.out.println(s.toJSON());
+        }
+    }
 }
 

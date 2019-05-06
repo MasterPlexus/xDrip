@@ -32,6 +32,7 @@
     <uses-permission-sdk-23 android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission-sdk-23 android:name="android.permission.READ_CONTACTS" />
     <uses-permission-sdk-23 android:name="android.permission.SEND_SMS" />
+    <uses-permission-sdk-23 android:name="android.permission.READ_PHONE_STATE" />
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
@@ -178,7 +179,7 @@
         <activity
             android:name=".NoteSearch"
             android:configChanges="orientation|screenSize"
-            android:label="Note Search" />
+            android:label="@string/note_search" />
 
         <receiver android:name=".AutoStart">
             <intent-filter>
@@ -209,7 +210,11 @@
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
             </intent-filter>
         </receiver>
-
+        <receiver android:name=".utils.framework.IncomingCallsReceiver" android:enabled="true" >
+            <intent-filter>
+                <action android:name="android.intent.action.PHONE_STATE" />
+            </intent-filter>
+        </receiver>
         <activity
             android:name=".Tables.CalibrationDataTable"
             android:label="@string/calibration_data_table" />
@@ -455,6 +460,11 @@
                 <action android:name="com.eveningoutpost.dexdrip.NS_EMULATOR" />
             </intent-filter>
         </receiver>
+        <receiver android:name=".UtilityModels.BroadcastSnoozeReceiver">
+            <intent-filter>
+                <action android:name="com.eveningoutpost.dexdrip.Snooze" />
+            </intent-filter>
+        </receiver>
         <receiver
             android:name=".localeTasker.receiver.FireReceiver"
             android:exported="true">
@@ -549,6 +559,11 @@
             android:label="@string/title_activity_maps"
             android:noHistory="true" />
 
+                <activity
+                    android:name=".profileeditor.BasalProfileEditor"
+                    android:configChanges="orientation|keyboardHidden"
+                    android:label="@string/basal_editor"
+                    android:screenOrientation="landscape" />
         <service
             android:name=".Services.DoNothingService"
             android:enabled="true"
@@ -661,6 +676,8 @@
             android:exported="true"
             android:label="@string/number_wall_config" />
         <activity android:name=".ui.activities.TimePickerPrefActivity"></activity>
+        <activity android:name=".ui.activities.DatabaseAdmin"
+            android:label="Database Admin"/>
     </application>
 
 </manifest>
