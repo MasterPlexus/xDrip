@@ -739,7 +739,7 @@ public class DexCollectionService extends Service implements BtCallBack {
 
     private static String getDefaultPin() {
         final String bk_pin = Blukon.getPin();
-        Log.e(TAG,"set pin to: " + bk_pin != null ? bk_pin : HM10Attributes.HM_DEFAULT_BT_PIN;
+        Log.e(TAG,"set pin to: " + bk_pin != null ? bk_pin : HM10Attributes.HM_DEFAULT_BT_PIN);
         return bk_pin != null ? bk_pin : HM10Attributes.HM_DEFAULT_BT_PIN;
     }
 
