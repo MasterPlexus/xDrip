@@ -69,6 +69,7 @@ public class LibreReceiver extends BroadcastReceiver {
                                 Libre2RawValue currentRawValue = processIntent(intent);
                                 if (currentRawValue == null) return;
                                 Log.v(TAG,"got bg reading: from sensor:"+currentRawValue.serial+" rawValue:"+currentRawValue.glucose+" at:"+currentRawValue.timestamp);
+                                prefs.edit().putString("Libre2_lastStatus","got bg reading: from sensor:"+currentRawValue.serial+" rawValue:"+currentRawValue.glucose+" at:"+currentRawValue.timestamp);
                                 if(!BgReading.last_within_minutes(5)) {
                                     List<Libre2RawValue> smoothingValues = Libre2RawValue.last20Minutes();
                                     smoothingValues.add(currentRawValue);
@@ -145,11 +146,15 @@ public class LibreReceiver extends BroadcastReceiver {
     private static double calculateWeightedAverage(List<Libre2RawValue> rawValues, long now) {
         double sum = 0;
         double weightSum = 0;
+        String doku ="";
         for (Libre2RawValue rawValue : rawValues) {
             double weight = 1 - ((now - rawValue.timestamp) / (double) SMOOTHING_DURATION);
             sum += rawValue.glucose * weight;
+            doku += "\nweight:" + weight + "; raw: " + rawValue.glucose;
             weightSum += weight;
         }
+        prefs.edit().putString("Libre2_lastStatus", prefs.getString("Libre2_lastStatus","") + doku);
+        Log.v(TAG,prefs.getString("Libre2_lastStatus",""));
         return Math.round(sum / weightSum);
     }
 }

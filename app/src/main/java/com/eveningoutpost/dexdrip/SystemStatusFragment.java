@@ -276,6 +276,12 @@ public class SystemStatusFragment extends Fragment {
             }
         }
 
+        if (prefs.getString("dex_collection_method", "").equals("LibreReceiver")) {
+            transmitter_status_view.setText("Libre2");
+            transmitter_status_view.append(prefs.getString("Libre2_lastStatus",""));
+            return;
+        }
+
     }
 
 
