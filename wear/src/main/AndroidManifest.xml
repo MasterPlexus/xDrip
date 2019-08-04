@@ -41,8 +41,7 @@
         android:icon="@drawable/ic_icon"
         android:label="@string/app_name"
         android:theme="@android:style/Theme.DeviceDefault"
-        tools:replace="android:allowBackup"
-        tools:ignore="GoogleAppIndexingWarning">
+        tools:replace="android:allowBackup">
 
         <!-- If you want your app to run on pre-22, then set required to false -->
         <uses-library
@@ -291,8 +290,8 @@
             android:name=".LocationPermissionActivity"
             android:label="title_activity_location_permission"
             android:launchMode="singleTop">
-
-    </activity>
+            android:theme="android:theme="@style/Theme.AppCompat.Light"
+        </activity>
         <activity
             android:name=".SnoozeActivity"
             android:configChanges="orientation|screenSize"
