@@ -13,6 +13,7 @@ public class Libre2RawValue extends PlusModel {
 
     static final String[] schema = {
             "CREATE TABLE Libre2RawValue (ts INTEGER PRIMARY KEY);",
+            "ALTER TABLE Libre2RawValue ADD COLUMN Id INTEGER;",
             "ALTER TABLE Libre2RawValue ADD COLUMN serial STRING;",
             "ALTER TABLE Libre2RawValue ADD COLUMN glucose REAL;",
 
