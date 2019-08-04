@@ -167,14 +167,14 @@ public class LibreReceiver extends BroadcastReceiver {
     }
 
     private static void writeSpecialLog(String TexttoLog){
-        if (Pref.getBooleanDefaultFalse("blueReader_writebatterylog")) {
+
             final String dir = getExternalDir();
             makeSureDirectoryExists(dir);
             writeLog(dir + "/Libre2Log.txt",
                     DateFormat.format("yyyyMMdd-kkmmss", System.currentTimeMillis()).toString() + "|" +
                             TexttoLog
             );
-        }
+
 
     }
     private static void writeLog(String logFile, String logLine) {
