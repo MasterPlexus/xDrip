@@ -452,7 +452,7 @@
                 <action android:name="com.eveningoutpost.dexdrip.NewCalibration" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".LibreAlarmReceiver">
+        <receiver android:name=".LibreAlarmReceiver">build
             <intent-filter>
                 <action android:name="com.eveningoutpost.dexdrip.FROM_LIBRE_ALARM" />
             </intent-filter>

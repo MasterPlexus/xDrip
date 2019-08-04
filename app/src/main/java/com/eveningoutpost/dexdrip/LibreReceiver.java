@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.text.format.DateFormat;
 
 import com.eveningoutpost.dexdrip.Models.BgReading;
 import com.eveningoutpost.dexdrip.Models.JoH;
@@ -15,12 +16,20 @@ import com.eveningoutpost.dexdrip.Models.Libre2RawValue;
 import com.eveningoutpost.dexdrip.Models.Sensor;
 import com.eveningoutpost.dexdrip.Models.UserError.Log;
 import com.eveningoutpost.dexdrip.UtilityModels.Intents;
+import com.eveningoutpost.dexdrip.UtilityModels.PersistentStore;
+import com.eveningoutpost.dexdrip.UtilityModels.Pref;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.eveningoutpost.dexdrip.Models.BgReading.bgReadingInsertFromJson;
+import static com.eveningoutpost.dexdrip.utils.FileUtils.getExternalDir;
+import static com.eveningoutpost.dexdrip.utils.FileUtils.makeSureDirectoryExists;
 
 /**
  * Created by jamorham on 14/11/2016.
@@ -69,7 +78,7 @@ public class LibreReceiver extends BroadcastReceiver {
                                 Libre2RawValue currentRawValue = processIntent(intent);
                                 if (currentRawValue == null) return;
                                 Log.v(TAG,"got bg reading: from sensor:"+currentRawValue.serial+" rawValue:"+currentRawValue.glucose+" at:"+currentRawValue.timestamp);
-                                prefs.edit().putString("Libre2_lastStatus","got bg reading: from sensor:"+currentRawValue.serial+" rawValue:"+currentRawValue.glucose+" at:"+currentRawValue.timestamp);
+                                writeSpecialLog("got bg reading: from sensor:"+currentRawValue.serial+" rawValue:"+currentRawValue.glucose+" at:"+ DateFormat.format("yyyyMMdd-kkmmss", currentRawValue.timestamp).toString());
                                 if(!BgReading.last_within_minutes(5)) {
                                     List<Libre2RawValue> smoothingValues = Libre2RawValue.last20Minutes();
                                     smoothingValues.add(currentRawValue);
@@ -153,8 +162,34 @@ public class LibreReceiver extends BroadcastReceiver {
             doku += "\nweight:" + weight + "; raw: " + rawValue.glucose;
             weightSum += weight;
         }
-        prefs.edit().putString("Libre2_lastStatus", prefs.getString("Libre2_lastStatus","") + doku);
-        Log.v(TAG,prefs.getString("Libre2_lastStatus",""));
+        writeSpecialLog(doku);
         return Math.round(sum / weightSum);
     }
+
+    private static void writeSpecialLog(String TexttoLog){
+        if (Pref.getBooleanDefaultFalse("blueReader_writebatterylog")) {
+            final String dir = getExternalDir();
+            makeSureDirectoryExists(dir);
+            writeLog(dir + "/Libre2Log.txt",
+                    DateFormat.format("yyyyMMdd-kkmmss", System.currentTimeMillis()).toString() + "|" +
+                            TexttoLog
+            );
+        }
+
+    }
+    private static void writeLog(String logFile, String logLine) {
+        PrintWriter pWriter = null;
+        try {
+            pWriter = new PrintWriter(new BufferedWriter(new FileWriter(logFile, true)));
+            pWriter.println(logLine);
+        } catch (IOException ioe) {
+            Log.w(TAG, "log write error: " + ioe.toString());
+        } finally {
+            if (pWriter != null){
+                pWriter.flush();
+                pWriter.close();
+            }
+        }
+    }
+
 }
