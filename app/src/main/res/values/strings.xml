@@ -1510,4 +1510,8 @@
     <string name="authentication_failed_wrong_password">Authentication Failed. Wrong password?</string>
     <string name="share_login_data_isnt_valid">Share Login data isn\'t valid - check username / password</string>
     <string name="connectivity_problem_reaching_share_servers">Connectivity problem reaching Share servers</string>
+    <string name="libre2_advanced_settings_summary">Advanced settings for Libre2 (Patched App)</string>
+    <string name="libre2_advanced_settings_title">Advanced settings for Libre2</string>
+    <string name="libre2smoothrange_summary">Timerange for smoothing</string>
+    <string name="libre2smoothrange_title">Timerange in minutes over wich the smoothing algorythm will be work</string>
 </resources>

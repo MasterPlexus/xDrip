@@ -914,8 +914,8 @@
                 android:title="@string/libre2_advanced_settings_title">
                 <SeekBarPreference
                     android:key="libre2smoothrange"
-                    android:title="@string/title_libre2smoothrange"
-                    android:summary="@string/summary_libre2smoothrange"
+                    android:title="@string/libre2smoothrange_title"
+                    android:summary="@string/libre2smoothrange_summary"
                     android:max="25"
                     android:min="1"
                     android:defaultValue="20" />
