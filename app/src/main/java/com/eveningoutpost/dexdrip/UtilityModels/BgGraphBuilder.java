@@ -81,8 +81,7 @@ import static com.eveningoutpost.dexdrip.UtilityModels.ColorCache.X;
 import static com.eveningoutpost.dexdrip.UtilityModels.ColorCache.getCol;
 
 public class BgGraphBuilder {
-    public static final int FUZZER = (1000 * 30 * 5); // 2.5 minutes
-    public static final int FUZZERminute = (1000 * 60 ); // 1 minutes
+    public static final int FUZZER = (1000 * 30 * Pref.getStringToInt("key_fuzzer_value",5));//(1000 * 30 * 5); // 2.5 minutes
     public final static long DEXCOM_PERIOD = 300_000; // 5 minutes
     public final static double NOISE_TRIGGER = 10;
     public final static double NOISE_TRIGGER_ULTRASENSITIVE = 1;
