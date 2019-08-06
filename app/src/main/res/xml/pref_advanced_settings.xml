@@ -907,6 +907,20 @@
                 android:summary="Extralog fuermich zur bluetoothanalyse"
                 android:title="Bluetooth extralog" />
         </PreferenceScreen>
+
+            <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+                android:key="xdrip_libre2_advanced_settings"
+                android:summary="@string/libre2_advanced_settings_summary"
+                android:title="@string/libre2_advanced_settings_title">
+                <SeekBarPreference
+                    android:key="libre2smoothrange"
+                    android:title="@string/title_libre2smoothrange"
+                    android:summary="@string/summary_libre2smoothrange"
+                    android:max="25"
+                    android:min="1"
+                    android:defaultValue="20" />
+            </PreferenceScreen>
+
             <CheckBoxPreference
                 android:defaultValue="true"
                 android:key="aggressive_service_restart"
