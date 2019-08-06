@@ -1307,7 +1307,7 @@ public class BgGraphBuilder {
 
             for (final Libre2RawValue bgLibre : Libre2RawValues) {
                 if ((DexCollectionType.getDexCollectionType() == DexCollectionType.LibreReceiver) && (bgLibre.glucose > 0)) {
-                    rawInterpretedValues.add(new PointValue((float) (bgLibre.timestamp / (1000 * 30 * prefs.getInt("key_fuzzer_value",5))), (float) unitized(bgLibre.glucose)));
+                    rawInterpretedValues.add(new PointValue((float) (bgLibre.timestamp / (1000 * 30 * Pref.getStringToInt("key_fuzzer_value",5))), (float) unitized(bgLibre.glucose)));
                 }
             }
 
