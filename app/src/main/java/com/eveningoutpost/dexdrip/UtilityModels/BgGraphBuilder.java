@@ -82,6 +82,7 @@ import static com.eveningoutpost.dexdrip.UtilityModels.ColorCache.getCol;
 
 public class BgGraphBuilder {
     public static final int FUZZER = (1000 * 30 * 5); // 2.5 minutes
+    public static final int FUZZERminute = (1000 * 60 ); // 1 minutes
     public final static long DEXCOM_PERIOD = 300_000; // 5 minutes
     public final static double NOISE_TRIGGER = 10;
     public final static double NOISE_TRIGGER_ULTRASENSITIVE = 1;
@@ -1306,7 +1307,7 @@ public class BgGraphBuilder {
 
             for (final Libre2RawValue bgLibre : Libre2RawValues) {
                 if ((DexCollectionType.getDexCollectionType() == DexCollectionType.LibreReceiver) && (bgLibre.glucose > 0)) {
-                    rawInterpretedValues.add(new PointValue((float) (bgLibre.timestamp / FUZZER), (float) unitized(bgLibre.glucose)));
+                    rawInterpretedValues.add(new PointValue((float) (bgLibre.timestamp / FUZZERminute), (float) unitized(bgLibre.glucose)));
                 }
             }
 
