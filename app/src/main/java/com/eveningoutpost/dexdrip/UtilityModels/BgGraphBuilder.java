@@ -1229,7 +1229,7 @@ public class BgGraphBuilder {
                     }
                 }
                 if ((DexCollectionType.getDexCollectionType() != DexCollectionType.LibreReceiver) && (interpret_raw && (bgReading.raw_calculated > 0))) {
-                    rawInterpretedValues.add(new PointValue((float) (bgReading.timestamp / FUZZER), (float) unitized(bgReading.raw_calculated)));
+                    rawInterpretedValues.add(new PointValue((float) (bgReading.timestamp / prefs.getInt("key_fuzzer_value",5)), (float) unitized(bgReading.raw_calculated)));
                 }
                 if ((!glucose_from_plugin) && (plugin != null) && (cd != null)) {
                     pluginValues.add(new PointValue((float) (bgReading.timestamp / FUZZER), (float) unitized(plugin.getGlucoseFromBgReading(bgReading, cd))));

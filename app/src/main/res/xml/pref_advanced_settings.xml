@@ -920,6 +920,12 @@
                 android:summary="@string/interpret_share_raw"
                 android:title="@string/interpret_raw" />
 
+            <EditTextPreference
+                android:defaultValue="5"
+                android:key="key_fuzzer_value"
+                android:numeric="integer"
+                android:title="Value for spezial graph fuzzer DW" />
+
             <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
                 android:key="xdrip_logging_adv_settings"
                 android:title="@string/extra_logging">
