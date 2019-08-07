@@ -913,9 +913,10 @@
                 android:summary="@string/libre2_advanced_settings_summary"
                 android:title="@string/libre2_advanced_settings_title">
                 <EditTextPreference
-                    android:key="libre2smoothrange"
+                    android:key="libre2smoothminuts"
                     android:title="@string/libre2smoothrange_title"
                     android:summary="@string/libre2smoothrange_summary"
+                    android:numeric="integer"
                     android:defaultValue="20" />
             </PreferenceScreen>
 

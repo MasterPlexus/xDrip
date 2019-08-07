@@ -30,7 +30,7 @@ public class Libre2RawValue extends PlusModel {
     public double glucose;
 
     public static List<Libre2RawValue> lastXMinutes() {
-        double timestamp = (new Date().getTime()) - (60000 * Pref.getStringToInt("libre2smoothrange",20));
+        double timestamp = (new Date().getTime()) - (60000 * Pref.getStringToInt("libre2smoothminuts",20));
         return new Select()
                 .from(Libre2RawValue.class)
                 .where("ts >= " + timestamp)
