@@ -912,12 +912,10 @@
                 android:key="xdrip_libre2_advanced_settings"
                 android:summary="@string/libre2_advanced_settings_summary"
                 android:title="@string/libre2_advanced_settings_title">
-                <SeekBarPreference
+                <EditTextPreference
                     android:key="libre2smoothrange"
                     android:title="@string/libre2smoothrange_title"
                     android:summary="@string/libre2smoothrange_summary"
-                    android:max="25"
-                    android:min="1"
                     android:defaultValue="20" />
             </PreferenceScreen>
 
