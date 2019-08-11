@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.text.format.DateFormat;
 
 import com.eveningoutpost.dexdrip.Models.BgReading;
 import com.eveningoutpost.dexdrip.Models.JoH;
@@ -15,8 +16,10 @@ import com.eveningoutpost.dexdrip.Models.Libre2RawValue;
 import com.eveningoutpost.dexdrip.Models.Sensor;
 import com.eveningoutpost.dexdrip.Models.UserError.Log;
 import com.eveningoutpost.dexdrip.UtilityModels.Intents;
+import com.eveningoutpost.dexdrip.UtilityModels.StatusItem;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -33,6 +36,8 @@ public class LibreReceiver extends BroadcastReceiver {
     private static final boolean d = false;
     private static SharedPreferences prefs;
     private static final Object lock = new Object();
+    private static String libre_doku="";
+
 
     @Override
     public void onReceive(final Context context, final Intent intent) {
@@ -54,8 +59,6 @@ public class LibreReceiver extends BroadcastReceiver {
                         final Bundle bundle = intent.getExtras();
                         //  BundleScrubber.scrub(bundle);
                         final String action = intent.getAction();
-
-
 
                         if (action == null) return;
 
@@ -146,11 +149,21 @@ public class LibreReceiver extends BroadcastReceiver {
     private static double calculateWeightedAverage(List<Libre2RawValue> rawValues, long now) {
         double sum = 0;
         double weightSum = 0;
+        libre_doku="";
         for (Libre2RawValue rawValue : rawValues) {
             double weight = 1 - ((now - rawValue.timestamp) / (double) SMOOTHING_DURATION);
             sum += rawValue.glucose * weight;
             weightSum += weight;
-        }
+            libre_doku += DateFormat.format("kk:mm:ss :",rawValue.timestamp) +" raw: " + rawValue.glucose + ", weight:" + weight + "\n" ;
+           }
         return Math.round(sum / weightSum);
+    }
+
+    public static List<StatusItem> megaStatus() {
+        final List<StatusItem> l = new ArrayList<>();
+        l.add(new StatusItem("Libre2 Sensor:",Sensor.currentSensor().uuid + " (" +  DateFormat.format("dd.MM.yyyy kk:mm:ss",Sensor.currentSensor().started_at) + ")"));
+        l.add(new StatusItem("Libre2 last Calculation values:",libre_doku));
+
+        return l;
     }
 }

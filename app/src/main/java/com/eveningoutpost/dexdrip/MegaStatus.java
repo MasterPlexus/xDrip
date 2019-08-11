@@ -114,6 +114,7 @@ public class MegaStatus extends ActivityWithMenu {
     private static final String INPEN_STATUS = "InPen";
     private static final String NIGHTSCOUT_FOLLOW = "Nightscout Follow";
     private static final String SHARE_FOLLOW = "Dex Share Follow";
+    private static final String XDRIP_LIBRE2 = "Libre2";
 
     public static PendingIntent getStatusPendingIntent(String section_name) {
         final Intent intent = new Intent(xdrip.getAppContext(), MegaStatus.class);
@@ -168,6 +169,9 @@ public class MegaStatus extends ActivityWithMenu {
             if(dexCollectionType.equals(SHFollow)) {
                 addAsection(SHARE_FOLLOW, "Dex Share Follow Status");
             }
+            if (DexCollectionType.getDexCollectionType() == DexCollectionType.LibreReceiver) {
+                addAsection(XDRIP_LIBRE2, "Libre 2 Patched App Status");
+            }
 
             //addAsection("Misc", "Currently Empty");
 
@@ -221,6 +225,9 @@ public class MegaStatus extends ActivityWithMenu {
                 break;
             case SHARE_FOLLOW:
                 la.addRows(ShareFollowService.megaStatus());
+                break;
+            case XDRIP_LIBRE2:
+                la.addRows(LibreReceiver.megaStatus());
                 break;
         }
         la.changed();
