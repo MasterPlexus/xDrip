@@ -145,6 +145,9 @@ public class MegaStatus extends ActivityWithMenu {
             } else if (dexCollectionType.equals(Medtrum)) {
                 addAsection(MEDTRUM_STATUS, "Medtrum A6 Status");
             }
+            if (DexCollectionType.getDexCollectionType() == DexCollectionType.LibreReceiver) {
+                addAsection(XDRIP_LIBRE2, "Libre 2 Patched App Status");
+            }
             if (DexCollectionType.hasWifi()) {
                 addAsection(IP_COLLECTOR, dexCollectionType == DexCollectionType.Mock ? "FAKE / MOCK DATA SOURCE" : "Wifi Wixel / Parakeet Status");
             }
@@ -168,9 +171,6 @@ public class MegaStatus extends ActivityWithMenu {
             }
             if(dexCollectionType.equals(SHFollow)) {
                 addAsection(SHARE_FOLLOW, "Dex Share Follow Status");
-            }
-            if (DexCollectionType.getDexCollectionType() == DexCollectionType.LibreReceiver) {
-                addAsection(XDRIP_LIBRE2, "Libre 2 Patched App Status");
             }
 
             //addAsection("Misc", "Currently Empty");
