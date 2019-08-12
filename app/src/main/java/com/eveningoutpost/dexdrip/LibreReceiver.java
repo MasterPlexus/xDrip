@@ -163,9 +163,15 @@ public class LibreReceiver extends BroadcastReceiver {
 
     public static List<StatusItem> megaStatus() {
         final List<StatusItem> l = new ArrayList<>();
+
         l.add(new StatusItem("Libre2 Sensor:",Sensor.currentSensor().uuid + "\nStart: " +  DateFormat.format("dd.MM.yyyy kk:mm",Sensor.currentSensor().started_at) ));
-        String lastReading = DateFormat.format("dd.MM.yyyy kk:mm:ss", Libre2RawValue.lastReading().timestamp).toString();
-        l.add(new StatusItem("Last Reading:", lastReading ));
+        String lastReading ="";
+        try {
+            lastReading = DateFormat.format("dd.MM.yyyy kk:mm:ss", Libre2RawValue.lastReading().timestamp).toString();
+            l.add(new StatusItem("Last Reading:", lastReading));
+        } catch (Exception e) {
+            Log.e(TAG, "Error readlast: " + e);
+        }
         l.add(new StatusItem("Libre2 last Calc.:",libre_doku));
 
         return l;

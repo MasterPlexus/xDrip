@@ -45,7 +45,7 @@ public class Libre2RawValue extends PlusModel {
                 .limit(1)
                 .execute();
 
-        return Result.get(1);
+        return Result.get(0);
     }
 
     public static void updateDB() {
