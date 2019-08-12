@@ -1,4 +1,3 @@
-
 package com.eveningoutpost.dexdrip;
 
 import android.content.BroadcastReceiver;
@@ -19,6 +18,7 @@ import com.eveningoutpost.dexdrip.UtilityModels.Intents;
 import com.eveningoutpost.dexdrip.UtilityModels.StatusItem;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -149,20 +149,24 @@ public class LibreReceiver extends BroadcastReceiver {
     private static double calculateWeightedAverage(List<Libre2RawValue> rawValues, long now) {
         double sum = 0;
         double weightSum = 0;
+        DecimalFormat longformat = new DecimalFormat( "#,###,###,##0.00" );
+
         libre_doku="";
         for (Libre2RawValue rawValue : rawValues) {
             double weight = 1 - ((now - rawValue.timestamp) / (double) SMOOTHING_DURATION);
             sum += rawValue.glucose * weight;
             weightSum += weight;
-            libre_doku += DateFormat.format("kk:mm:ss :",rawValue.timestamp) +" raw: " + rawValue.glucose + ", weight:" + weight + "\n" ;
+            libre_doku += DateFormat.format("kk:mm:ss :",rawValue.timestamp) + " w:" + longformat.format(weight) +" raw: " + rawValue.glucose  + "\n" ;
            }
         return Math.round(sum / weightSum);
     }
 
     public static List<StatusItem> megaStatus() {
         final List<StatusItem> l = new ArrayList<>();
-        l.add(new StatusItem("Libre2 Sensor:",Sensor.currentSensor().uuid + " (" +  DateFormat.format("dd.MM.yyyy kk:mm:ss",Sensor.currentSensor().started_at) + ")"));
-        l.add(new StatusItem("Libre2 last Calculation values:",libre_doku));
+        l.add(new StatusItem("Libre2 Sensor:",Sensor.currentSensor().uuid + "\nStart: " +  DateFormat.format("dd.MM.yyyy kk:mm",Sensor.currentSensor().started_at) ));
+        String lastReading = DateFormat.format("dd.MM.yyyy kk:mm:ss", Libre2RawValue.lastReading().timestamp).toString();
+        l.add(new StatusItem("Last Reading:", lastReading ));
+        l.add(new StatusItem("Libre2 last Calc.:",libre_doku));
 
         return l;
     }

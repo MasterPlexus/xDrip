@@ -37,6 +37,16 @@ public class Libre2RawValue extends PlusModel {
                 .execute();
     }
 
+    public static Libre2RawValue lastReading() {
+        List<Libre2RawValue> Result = new Select()
+                .from(Libre2RawValue.class)
+                //.where("ts >= " + timestamp)
+                .orderBy("ts asc")
+                .limit(1)
+                .execute();
+        return Result.get(1);
+    }
+
     public static void updateDB() {
         fixUpTable(schema, false);
     }
