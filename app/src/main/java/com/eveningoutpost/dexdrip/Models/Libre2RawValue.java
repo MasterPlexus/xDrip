@@ -40,7 +40,6 @@ public class Libre2RawValue extends PlusModel {
     public static Libre2RawValue lastReading() {
         List<Libre2RawValue> Result = new Select()
                 .from(Libre2RawValue.class)
-                //.where("ts >= " + timestamp)
                 .orderBy("ts asc")
                 .limit(1)
                 .execute();
