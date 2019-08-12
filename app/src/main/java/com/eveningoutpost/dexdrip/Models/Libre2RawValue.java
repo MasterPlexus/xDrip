@@ -38,11 +38,13 @@ public class Libre2RawValue extends PlusModel {
     }
 
     public static Libre2RawValue lastReading() {
-        List<Libre2RawValue> Result = new Select()
+        List<Libre2RawValue> Result;
+        Result = new Select()
                 .from(Libre2RawValue.class)
                 .orderBy("ts asc")
                 .limit(1)
                 .execute();
+
         return Result.get(1);
     }
 
