@@ -37,6 +37,7 @@ public class LibreReceiver extends BroadcastReceiver {
     private static SharedPreferences prefs;
     private static final Object lock = new Object();
     private static String libre_doku="";
+    private static long last_reading=0;
 
 
     @Override
@@ -104,6 +105,7 @@ public class LibreReceiver extends BroadcastReceiver {
         }
         double glucose = intent.getDoubleExtra("glucose", 0);
         long timestamp = intent.getLongExtra("timestamp", 0);
+        last_reading = timestamp;
         String serial = intent.getBundleExtra("bleManager").getString("sensorSerial");
         if (serial == null) {
             Log.e(TAG,"Received faulty intent from LibreLink.");
@@ -164,15 +166,15 @@ public class LibreReceiver extends BroadcastReceiver {
     public static List<StatusItem> megaStatus() {
         final List<StatusItem> l = new ArrayList<>();
 
-        l.add(new StatusItem("Libre2 Sensor:",Sensor.currentSensor().uuid + "\nStart: " +  DateFormat.format("dd.MM.yyyy kk:mm",Sensor.currentSensor().started_at) ));
+        l.add(new StatusItem("Libre2 Sensor",Sensor.currentSensor().uuid + "\nStart: " +  DateFormat.format("dd.MM.yyyy kk:mm",Sensor.currentSensor().started_at) ));
         String lastReading ="";
         try {
-            lastReading = DateFormat.format("dd.MM.yyyy kk:mm:ss", Libre2RawValue.lastReading().timestamp).toString();
-            l.add(new StatusItem("Last Reading:", lastReading));
+            lastReading = DateFormat.format("dd.MM.yyyy kk:mm:ss", last_reading).toString();
+            l.add(new StatusItem("Last Reading", lastReading));
         } catch (Exception e) {
             Log.e(TAG, "Error readlast: " + e);
         }
-        l.add(new StatusItem("Libre2 last Calc.:",libre_doku));
+        l.add(new StatusItem("Last Calc.",libre_doku));
 
         return l;
     }
