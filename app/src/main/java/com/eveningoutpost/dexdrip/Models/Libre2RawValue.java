@@ -58,7 +58,6 @@ public class Libre2RawValue extends PlusModel {
 
         Result = new Select("serial, MIN(ts) as ts_from, MAX(ts) AS ts_to ")
                 .from(Libre2RawValue.class)
-                .where("ts ")
                 .groupBy("serial")
                 .orderBy("ts ASC")
                 .limit(10)
