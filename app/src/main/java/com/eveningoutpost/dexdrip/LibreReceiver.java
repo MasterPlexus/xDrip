@@ -185,6 +185,7 @@ public class LibreReceiver extends BroadcastReceiver {
             Log.e(TAG, "Error readlast: " + e);
         }
         l.add(new StatusItem("Last Calc.",libre_doku));
+        l.add(new StatusItem("Sensors", lastSensors()));
 
         return l;
     }
