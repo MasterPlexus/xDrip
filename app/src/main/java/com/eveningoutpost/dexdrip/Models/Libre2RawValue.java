@@ -31,6 +31,12 @@ public class Libre2RawValue extends PlusModel {
     @Column(name = "glucose", index = false)
     public double glucose;
 
+    @Column(name = "ts_from", index = false)
+    public long ts_from;
+
+    @Column(name = "ts_from", index = false)
+    public long ts_to;
+
     public static List<Libre2RawValue> last20Minutes() {
         double timestamp = (new Date().getTime()) - (60000 * 20);
         return new Select()
@@ -53,18 +59,17 @@ public class Libre2RawValue extends PlusModel {
         return Result.get(0);
     }
 
-    public static List Libre2Sensors() {
-        List<Model> Result;
+    public static List<Libre2RawValue> Libre2Sensors() {
 
-        Result = new Select("serial, MIN(ts) as ts_from, MAX(ts) AS ts_to ")
+        return new Select("serial, MIN(ts) as ts_from, MAX(ts) AS ts_to ")
                 .from(Libre2RawValue.class)
                 .groupBy("serial")
                 .orderBy("ts ASC")
                 .limit(10)
                 .execute();
 
-        return Result;
     }
+
     public static void updateDB() {
         fixUpTable(schema, false);
     }

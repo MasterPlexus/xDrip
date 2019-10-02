@@ -40,6 +40,7 @@ public class LibreReceiver extends BroadcastReceiver {
     private static final Object lock = new Object();
     private static String libre_doku="";
     private static long last_reading=0;
+    private Object sensor;
 
 
     @Override
@@ -167,8 +168,8 @@ public class LibreReceiver extends BroadcastReceiver {
 
     private static String lastSensors() {
         String Sum ="";
-        for (Object Sensor : Libre2Sensors()) {
-            Sum += Sensor.toString() + "\n";
+        for (Libre2RawValue Sensor : Libre2Sensors()) {
+            Sum += Sensor.serial + " from: " + DateFormat.format("dd.MM.yyyy",Sensor.ts_from) + " to: " + DateFormat.format("dd.MM.yyyy",Sensor.ts_to) +"\n";
         }
 
         return Sum;
