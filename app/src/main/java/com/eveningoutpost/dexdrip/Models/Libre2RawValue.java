@@ -3,10 +3,13 @@ package com.eveningoutpost.dexdrip.Models;
 
         import android.provider.BaseColumns;
 
+        import com.activeandroid.Model;
         import com.activeandroid.annotation.Column;
         import com.activeandroid.annotation.Table;
         import com.activeandroid.query.Select;
 
+        import java.sql.ResultSet;
+        import java.sql.ResultSetMetaData;
         import java.util.Date;
         import java.util.List;
 
@@ -50,6 +53,19 @@ public class Libre2RawValue extends PlusModel {
         return Result.get(0);
     }
 
+    public static List Libre2Sensors() {
+        List<Model> Result;
+
+        Result = new Select("serial, MIN(ts) as ts_from, MAX(ts) AS ts_to ")
+                .from(Libre2RawValue.class)
+                .where("ts ")
+                .groupBy("serial")
+                .orderBy("ts ASC")
+                .limit(10)
+                .execute();
+
+        return Result;
+    }
     public static void updateDB() {
         fixUpTable(schema, false);
     }

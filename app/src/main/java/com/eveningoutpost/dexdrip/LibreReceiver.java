@@ -18,12 +18,14 @@ import com.eveningoutpost.dexdrip.UtilityModels.Intents;
 import com.eveningoutpost.dexdrip.UtilityModels.StatusItem;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 
+import java.lang.reflect.Array;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.eveningoutpost.dexdrip.Models.BgReading.bgReadingInsertFromJson;
+import static com.eveningoutpost.dexdrip.Models.Libre2RawValue.Libre2Sensors;
 
 /**
  * Created by jamorham on 14/11/2016.
@@ -163,6 +165,14 @@ public class LibreReceiver extends BroadcastReceiver {
         return Math.round(sum / weightSum);
     }
 
+    private static String lastSensors() {
+        String Sum ="";
+        for (Object Sensor : Libre2Sensors()) {
+            Sum += Sensor.toString() + "\n";
+        }
+
+        return Sum;
+    }
     public static List<StatusItem> megaStatus() {
         final List<StatusItem> l = new ArrayList<>();
 
