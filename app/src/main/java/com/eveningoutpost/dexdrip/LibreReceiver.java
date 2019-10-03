@@ -166,14 +166,7 @@ public class LibreReceiver extends BroadcastReceiver {
         return Math.round(sum / weightSum);
     }
 
-    private static String lastSensors() {
-        String Sum ="";
-        for (Libre2RawValue Sensor : Libre2Sensors()) {
-            Sum += Sensor.serial + " from: " + DateFormat.format("dd.MM.yyyy",Sensor.ts_from) + " to: " + DateFormat.format("dd.MM.yyyy",Sensor.ts_to) +"\n";
-        }
 
-        return Sum;
-    }
     public static List<StatusItem> megaStatus() {
         final List<StatusItem> l = new ArrayList<>();
 
@@ -186,7 +179,7 @@ public class LibreReceiver extends BroadcastReceiver {
             Log.e(TAG, "Error readlast: " + e);
         }
         l.add(new StatusItem("Last Calc.",libre_doku));
-        l.add(new StatusItem("Sensors", lastSensors()));
+        l.add(new StatusItem("Sensors", Libre2Sensors()));
 
         return l;
     }

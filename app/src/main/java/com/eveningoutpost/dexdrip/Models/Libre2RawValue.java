@@ -2,6 +2,7 @@ package com.eveningoutpost.dexdrip.Models;
 
 
         import android.provider.BaseColumns;
+        import android.text.format.DateFormat;
 
         import com.activeandroid.Model;
         import com.activeandroid.annotation.Column;
@@ -10,6 +11,7 @@ package com.eveningoutpost.dexdrip.Models;
 
         import java.sql.ResultSet;
         import java.sql.ResultSetMetaData;
+        import java.sql.SQLException;
         import java.util.Date;
         import java.util.List;
 
@@ -30,12 +32,6 @@ public class Libre2RawValue extends PlusModel {
 
     @Column(name = "glucose", index = false)
     public double glucose;
-
-    @Column(name = "ts_from", index = false)
-    public long ts_from;
-
-    @Column(name = "ts_from", index = false)
-    public long ts_to;
 
     public static List<Libre2RawValue> last20Minutes() {
         double timestamp = (new Date().getTime()) - (60000 * 20);
@@ -59,15 +55,28 @@ public class Libre2RawValue extends PlusModel {
         return Result.get(0);
     }
 
-    public static List<Libre2RawValue> Libre2Sensors() {
+    public static String Libre2Sensors() {
+        String Sum="";
 
-        return new Select("serial, MIN(ts) as ts_from, MAX(ts) AS ts_to ")
-                .from(Libre2RawValue.class)
-                .groupBy("serial")
-                .orderBy("ts ASC")
-                .limit(10)
-                .execute();
+        try {
+            ResultSet rs = (ResultSet) new Select("serial, MIN(ts) as ts_from, MAX(ts) AS ts_to")
+                    .from(Libre2RawValue.class)
+                    .groupBy("serial")
+                    .orderBy("ts ASC")
+                    .limit(10)
+                    .execute();
 
+            ResultSetMetaData md = rs.getMetaData();
+            int columns = md.getColumnCount();
+
+            while (rs.next()) {
+                Sum += rs.getString("serial") + " from: " + DateFormat.format("dd.MM.yyyy",rs.getLong("ts_from")) + " to: " + DateFormat.format("dd.MM.yyyy",rs.getLong("ts_to")) +"\n";
+            }
+
+        } catch (SQLException e) {
+
+        }
+        return Sum;
     }
 
     public static void updateDB() {
