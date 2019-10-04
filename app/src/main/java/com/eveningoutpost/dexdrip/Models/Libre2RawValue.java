@@ -55,27 +55,27 @@ public class Libre2RawValue extends PlusModel {
         return Result.get(0);
     }
 
-    public static String Libre2Sensors() {
+    public static String Libre2Sensors() throws SQLException {
         String Sum="";
-        UserError.Log.d("Libre2RawValues", "start read LibreSensors");
+        UserError.Log.d("Libre2RawValue", "start read LibreSensors");
         try {
-            UserError.Log.d("Libre2RawValues", "start query");
+            UserError.Log.d("Libre2RawValue", "start query");
             ResultSet rs = (ResultSet) new Select("serial, MIN(ts) as ts_from, MAX(ts) AS ts_to")
                     .from(Libre2RawValue.class)
                     .groupBy("serial")
                     .orderBy("ts ASC")
                     .limit(10)
                     .execute();
-            UserError.Log.d("Libre2RawValues", "start while");
+            UserError.Log.d("Libre2RawValue", "start while");
             while (rs.next()) {
-                UserError.Log.d("Libre2RawValues", "start sum");
+                UserError.Log.d("Libre2RawValue", "start sum");
                 Sum += rs.getString("serial") + " from: " + DateFormat.format("dd.MM.yyyy",rs.getLong("ts_from")) + " to: " + DateFormat.format("dd.MM.yyyy",rs.getLong("ts_to")) +"\n";
             }
 
-        } catch (SQLException e) {
-            UserError.Log.wtf("Libre2RawValues", "LibreSensors exception" + e.toString());
+        } catch (Exception e) {
+            UserError.Log.wtf("Libre2RawValue", "LibreSensors exception" + e.toString());
         }
-        UserError.Log.d("Libre2RawValues", "start return");
+        UserError.Log.d("Libre2RawValue", "start return");
         return Sum;
     }
 
