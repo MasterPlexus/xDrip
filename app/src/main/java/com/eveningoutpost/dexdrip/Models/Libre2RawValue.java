@@ -57,25 +57,25 @@ public class Libre2RawValue extends PlusModel {
 
     public static String Libre2Sensors() {
         String Sum="";
-
+        UserError.Log.d("Libre2RawValues", "start read LibreSensors");
         try {
+            UserError.Log.d("Libre2RawValues", "start query");
             ResultSet rs = (ResultSet) new Select("serial, MIN(ts) as ts_from, MAX(ts) AS ts_to")
                     .from(Libre2RawValue.class)
                     .groupBy("serial")
                     .orderBy("ts ASC")
                     .limit(10)
                     .execute();
-
-            ResultSetMetaData md = rs.getMetaData();
-            int columns = md.getColumnCount();
-
+            UserError.Log.d("Libre2RawValues", "start while");
             while (rs.next()) {
+                UserError.Log.d("Libre2RawValues", "start sum");
                 Sum += rs.getString("serial") + " from: " + DateFormat.format("dd.MM.yyyy",rs.getLong("ts_from")) + " to: " + DateFormat.format("dd.MM.yyyy",rs.getLong("ts_to")) +"\n";
             }
 
         } catch (SQLException e) {
-
+            UserError.Log.wtf("Libre2RawValues", "LibreSensors exception" + e.toString());
         }
+        UserError.Log.d("Libre2RawValues", "start return");
         return Sum;
     }
 
