@@ -19,6 +19,7 @@ import com.eveningoutpost.dexdrip.UtilityModels.StatusItem;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 
 import java.lang.reflect.Array;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -179,7 +180,11 @@ public class LibreReceiver extends BroadcastReceiver {
             Log.e(TAG, "Error readlast: " + e);
         }
         l.add(new StatusItem("Last Calc.",libre_doku));
-        l.add(new StatusItem("Sensors", Libre2Sensors()));
+        try {
+            l.add(new StatusItem("Sensors", Libre2Sensors()));
+        } catch (SQLException e) {
+            Log.wtf (TAG,e.toString());
+        }
 
         return l;
     }
