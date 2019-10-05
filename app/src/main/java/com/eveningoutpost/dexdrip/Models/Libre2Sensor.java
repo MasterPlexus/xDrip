@@ -31,30 +31,21 @@ public class Libre2Sensor extends PlusModel {
     @Column(name = "readings", index = true)
     public long readngs;
 
-    public static String Libre2Sensors() throws SQLException {
+    public static String Libre2Sensors() {
         String Sum="";
-        UserError.Log.e(TAG, "start read LibreSensors");
-        try {
-            UserError.Log.e(TAG, "start query");
-            List<Libre2Sensor> rs = new Select()
-                    .from(Libre2Sensor.class)
-                    .where("ts_from > 0")
-                    .execute();
-            UserError.Log.e(TAG, "start while num " + rs.size());
-            for (Libre2Sensor rsSensor : rs ) {
 
+        List<Libre2Sensor> rs = new Select()
+                .from(Libre2Sensor.class)
+                //.where("ts_from > 0")
+                .execute();
 
-                UserError.Log.e(TAG, "start sum");
-                Sum += rsSensor.serial +
-                        " from: " + DateFormat.format("dd.MM.yy",rsSensor.ts_from) +
-                        " to: " + DateFormat.format("dd.MM.yy",rsSensor.ts_to) +
-                        "\n";
-            }
-
-        } catch (Exception e) {
-            UserError.Log.wtf(TAG, "LibreSensors exception" + e.toString());
+        for (Libre2Sensor rsSensor : rs ) {
+            Sum = Sum + rsSensor.serial +
+                    "\n" + DateFormat.format("dd.MM.yy",rsSensor.ts_from) +
+                    " to: " + DateFormat.format("dd.MM.yy",rsSensor.ts_to) +
+                    " readings: " + rsSensor.readngs +
+                    "\n";
         }
-        UserError.Log.e(TAG, "start return");
         return Sum;
     }
 
