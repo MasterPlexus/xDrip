@@ -33,18 +33,16 @@ public class Libre2Sensor extends PlusModel {
         UserError.Log.e(TAG, "start read LibreSensors");
         try {
             UserError.Log.e(TAG, "start query");
-            List<Sensor> rs = new Select()
-                    .from(Sensor.class)
-                    .orderBy("_id asc")
+            List<Libre2Sensor> rs = new Select()
+                    .from(Libre2Sensor.class)
                     .limit(10)
                     .execute();
-
             UserError.Log.e(TAG, "start while num " + rs.size());
-            for (Sensor rsSensor : rs ) {
+            for (Libre2Sensor rsSensor : rs ) {
 
 
                 UserError.Log.e(TAG, "start sum");
-                Sum += rsSensor.uuid + " from: " + DateFormat.format("dd.MM.yyyy",rsSensor.started_at) + " to: " + DateFormat.format("dd.MM.yyyy",rsSensor.stopped_at) +"\n";
+                Sum += rsSensor.serial + " from: " + DateFormat.format("dd.MM.yyyy",rsSensor.ts_from) + " to: " + DateFormat.format("dd.MM.yyyy",rsSensor.ts_to) +"\n";
             }
 
         } catch (Exception e) {
