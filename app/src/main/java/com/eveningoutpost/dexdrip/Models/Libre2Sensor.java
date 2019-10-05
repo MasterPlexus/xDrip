@@ -38,6 +38,7 @@ public class Libre2Sensor extends PlusModel {
                 .from(Libre2Sensor.class)
                 //.where("ts_from > 0")
                 .execute();
+        UserError.Log.e (TAG, rs.toString());
 
         for (Libre2Sensor rsSensor : rs ) {
             Sum = Sum + rsSensor.serial +
