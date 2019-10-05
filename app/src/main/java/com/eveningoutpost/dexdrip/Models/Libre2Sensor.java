@@ -16,7 +16,7 @@ public class Libre2Sensor extends PlusModel {
 
     static final String[] schema = {
             "DROP VIEW IF EXISTS Libre2Sensors;",
-            "CREATE VIEW Libre2Sensors AS SELECT 0 as _id, serial, MIN(ts) as ts_from, MAX(ts) AS ts_to, COUNT(*) AS readings FROM Libre2RawValue2 GROUP BY serial ORDER BY ts DESC;"
+            "CREATE VIEW Libre2Sensors AS SELECT serial as _id, serial, MIN(ts) as ts_from, MAX(ts) AS ts_to, COUNT(*) AS readings FROM Libre2RawValue2 GROUP BY serial ORDER BY ts DESC;"
     };
 
     @Column(name = "serial", index = true)
@@ -38,7 +38,7 @@ public class Libre2Sensor extends PlusModel {
                 .from(Libre2Sensor.class)
                 //.where("ts_from > 0")
                 .execute();
-        UserError.Log.e (TAG, rs.toString());
+        //UserError.Log.e (TAG, rs.toString());
 
         for (Libre2Sensor rsSensor : rs ) {
             Sum = Sum + rsSensor.serial +
