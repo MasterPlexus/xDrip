@@ -10,15 +10,13 @@ import com.activeandroid.query.Select;
 import java.sql.SQLException;
 import java.util.List;
 
-@Table(name = "Libre2RawValue2", id = BaseColumns._ID)
+@Table(name = "Libre2Sensors")
 public class Libre2Sensor extends PlusModel {
     static final String TAG = "Libre2Sensor";
 
     static final String[] schema = {
-            "DROP TABLE Libre2RawValue;",
-            "CREATE TABLE Libre2RawValue2 (_id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER, serial STRING, glucose REAL);",
-            "CREATE INDEX index_Libre2RawValue2_ts on Libre2RawValue2(ts);"
-
+            "DROP VIEW IF EXISTS Libre2Sensors;",
+            "CREATE VIEW Libre2Sensors AS SELECT serial, MIN(ts) as ts_from, MAX(ts) AS ts_to FROM Libre2RawValue2 GROUP BY serial ORDER BY ts;"
     };
 
     @Column(name = "serial", index = true)
@@ -35,10 +33,8 @@ public class Libre2Sensor extends PlusModel {
         UserError.Log.e(TAG, "start read LibreSensors");
         try {
             UserError.Log.e(TAG, "start query");
-            List<Libre2Sensor> rs = new Select("serial, MIN(ts) as ts_from, MAX(ts) AS ts_to")
+            List<Libre2Sensor> rs = new Select()
                     .from(Libre2Sensor.class)
-                    .groupBy("serial")
-                    .orderBy("ts ASC")
                     .limit(10)
                     .execute();
             UserError.Log.e(TAG, "start while num " + rs.size());
