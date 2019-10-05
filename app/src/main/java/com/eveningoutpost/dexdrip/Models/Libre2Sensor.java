@@ -16,7 +16,7 @@ public class Libre2Sensor extends PlusModel {
 
     static final String[] schema = {
             "DROP VIEW IF EXISTS Libre2Sensors;",
-            "CREATE VIEW Libre2Sensors AS SELECT serial, MIN(ts) as ts_from, MAX(ts) AS ts_to FROM Libre2RawValue2 GROUP BY serial ORDER BY ts;"
+            "CREATE VIEW Libre2Sensors AS SELECT serial, MIN(ts) as ts_from, MAX(ts) AS ts_to, COUNT(*) AS readings FROM Libre2RawValue2 GROUP BY serial ORDER BY ts DESC;"
     };
 
     @Column(name = "serial", index = true)
@@ -28,6 +28,9 @@ public class Libre2Sensor extends PlusModel {
     @Column(name = "ts_to", index = true)
     public long ts_to;
 
+    @Column(name = "readings", index = true)
+    public long readngs;
+
     public static String Libre2Sensors() throws SQLException {
         String Sum="";
         UserError.Log.e(TAG, "start read LibreSensors");
@@ -35,14 +38,13 @@ public class Libre2Sensor extends PlusModel {
             UserError.Log.e(TAG, "start query");
             List<Libre2Sensor> rs = new Select()
                     .from(Libre2Sensor.class)
-                    .limit(10)
                     .execute();
             UserError.Log.e(TAG, "start while num " + rs.size());
             for (Libre2Sensor rsSensor : rs ) {
 
 
                 UserError.Log.e(TAG, "start sum");
-                Sum += rsSensor.serial + " from: " + DateFormat.format("dd.MM.yyyy",rsSensor.ts_from) + " to: " + DateFormat.format("dd.MM.yyyy",rsSensor.ts_to) +"\n";
+                Sum += rsSensor.serial + " from: " + DateFormat.format("dd.MM.yy",rsSensor.ts_from) + " to: " + DateFormat.format("dd.MM.yy",rsSensor.ts_to) +"\n";
             }
 
         } catch (Exception e) {
