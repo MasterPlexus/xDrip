@@ -22,13 +22,13 @@ public class Libre2Sensor extends PlusModel {
     @Column(name = "serial", index = true)
     public String serial;
 
-    @Column(name = "ts_from", index = true)
+    @Column(name = "ts_from", index = false)
     public long ts_from;
 
-    @Column(name = "ts_to", index = true)
+    @Column(name = "ts_to", index = false)
     public long ts_to;
 
-    @Column(name = "readings", index = true)
+    @Column(name = "readings", index = false)
     public long readngs;
 
     public static String Libre2Sensors() {
@@ -40,11 +40,11 @@ public class Libre2Sensor extends PlusModel {
                 .execute();
         //UserError.Log.e (TAG, rs.toString());
 
-        for (Libre2Sensor rsSensor : rs ) {
-            Sum = Sum + rsSensor.serial +
-                    "\n" + DateFormat.format("dd.MM.yy",rsSensor.ts_from) +
-                    " to: " + DateFormat.format("dd.MM.yy",rsSensor.ts_to) +
-                    " readings: " + rsSensor.readngs +
+        for (Libre2Sensor Sensorpart : rs ) {
+            Sum = Sum + Sensorpart.serial +
+                    "\n" + DateFormat.format("dd.MM.yy",Sensorpart.ts_from) +
+                    " to: " + DateFormat.format("dd.MM.yy",Sensorpart.ts_to) +
+                    " readings: " + Sensorpart.readngs +
                     "\n";
         }
         return Sum;
