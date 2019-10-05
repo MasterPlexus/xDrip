@@ -38,6 +38,7 @@ public class Libre2Sensor extends PlusModel {
             UserError.Log.e(TAG, "start query");
             List<Libre2Sensor> rs = new Select()
                     .from(Libre2Sensor.class)
+                    .where("ts_from > 0")
                     .execute();
             UserError.Log.e(TAG, "start while num " + rs.size());
             for (Libre2Sensor rsSensor : rs ) {
