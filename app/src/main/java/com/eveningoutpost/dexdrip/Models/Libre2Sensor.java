@@ -10,13 +10,13 @@ import com.activeandroid.query.Select;
 import java.sql.SQLException;
 import java.util.List;
 
-@Table(name = "Libre2Sensors", id = BaseColumns._ID)
+@Table(name = "Libre2Sensors", id = BaseColumns._COUNT)
 public class Libre2Sensor extends PlusModel {
     static final String TAG = "Libre2Sensor";
 
     static final String[] schema = {
             "DROP VIEW IF EXISTS Libre2Sensors;",
-            "CREATE VIEW Libre2Sensors AS SELECT serial as _id, serial, MIN(ts) as ts_from, MAX(ts) AS ts_to, COUNT(*) AS readings FROM Libre2RawValue2 GROUP BY serial ORDER BY ts DESC;"
+            "CREATE VIEW Libre2Sensors AS SELECT serial, MIN(ts) as ts_from, MAX(ts) AS ts_to, COUNT(*) AS readings FROM Libre2RawValue2 GROUP BY serial ORDER BY ts DESC;"
     };
 
     @Column(name = "serial", index = true)
