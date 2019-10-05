@@ -63,7 +63,7 @@ public class Libre2RawValue extends PlusModel {
         try {
             UserError.Log.d("Libre2RawValue", "start query");
             List<Libre2Sensor> rs = new Select("serial, MIN(ts) as ts_from, MAX(ts) AS ts_to")
-                    .from(Libre2Sensor.class)
+                    .from(Libre2RawValue.class)
                     .groupBy("serial")
                     .orderBy("ts ASC")
                     .limit(10)
