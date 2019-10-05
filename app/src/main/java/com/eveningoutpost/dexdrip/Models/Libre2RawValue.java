@@ -57,46 +57,8 @@ public class Libre2RawValue extends PlusModel {
         return Result.get(0);
     }
 
-    public static String Libre2Sensors() throws SQLException {
-        String Sum="";
-        UserError.Log.d("Libre2RawValue", "start read LibreSensors");
-        try {
-            UserError.Log.d("Libre2RawValue", "start query");
-            List<Libre2Sensor> rs = new Select("serial, MIN(ts) as ts_from, MAX(ts) AS ts_to")
-                    .from(Libre2RawValue.class)
-                    .groupBy("serial")
-                    .orderBy("ts ASC")
-                    .limit(10)
-                    .execute();
-            UserError.Log.d("Libre2RawValue", "start while");
-            for (Libre2Sensor rsSensor : rs ) {
-
-
-                UserError.Log.d("Libre2RawValue", "start sum");
-                Sum += rsSensor.serial + " from: " + DateFormat.format("dd.MM.yyyy",rsSensor.ts_from) + " to: " + DateFormat.format("dd.MM.yyyy",rsSensor.ts_to) +"\n";
-            }
-
-        } catch (Exception e) {
-            UserError.Log.wtf("Libre2RawValue", "LibreSensors exception" + e.toString());
-        }
-        UserError.Log.d("Libre2RawValue", "start return");
-        return Sum;
-    }
-
     public static void updateDB() {
         fixUpTable(schema, false);
     }
 }
 
-class Libre2Sensor extends PlusModel {
-
-    @Column(name = "serial", index = true)
-    public String serial;
-
-    @Column(name = "ts_from", index = true)
-    public long ts_from;
-
-    @Column(name = "ts_to", index = true)
-    public long ts_to;
-
-}

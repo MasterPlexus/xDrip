@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.eveningoutpost.dexdrip.Models.BgReading.bgReadingInsertFromJson;
-import static com.eveningoutpost.dexdrip.Models.Libre2RawValue.Libre2Sensors;
+import static com.eveningoutpost.dexdrip.Models.Libre2Sensor.Libre2Sensors;
 
 /**
  * Created by jamorham on 14/11/2016.
