@@ -29,7 +29,7 @@ public class Libre2Sensor extends PlusModel {
     public long ts_to;
 
     @Column(name = "readings", index = false)
-    public long readngs;
+    public long readings;
 
     public static String Libre2Sensors() {
         String Sum="";
@@ -45,7 +45,7 @@ public class Libre2Sensor extends PlusModel {
                     "\n" + DateFormat.format("dd.MM.yy",Sensorpart.ts_from) +
                     " to: " + DateFormat.format("dd.MM.yy",Sensorpart.ts_to) +
                     " (" +JoH.niceTimeScalarShortWithDecimalHours(Sensorpart.ts_to - Sensorpart.ts_from) + ")" +
-                    " readings: " + (Sensorpart.readngs /((Sensorpart.ts_to-Sensorpart.ts_from)/600)) + "%\n" +
+                    " readings: " + ((Sensorpart.readings /((Sensorpart.ts_to - Sensorpart.ts_from)))/600) + "%\n" +
                     "------------------\n";
         }
         return Sum;
