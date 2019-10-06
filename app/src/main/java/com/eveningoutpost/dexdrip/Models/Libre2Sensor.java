@@ -41,11 +41,15 @@ public class Libre2Sensor extends PlusModel {
         //UserError.Log.e (TAG, rs.toString());
 
         for (Libre2Sensor Sensorpart : rs ) {
+            Long Diff_ts = Sensorpart.ts_to - Sensorpart.ts_from;
+            UserError.Log.e (TAG, "Diff=" + Diff_ts);
+            UserError.Log.e (TAG, "Readings=" + Sensorpart.readings);
+            UserError.Log.e (TAG, "Calc=" + (Diff_ts / 600));
             Sum = Sum + Sensorpart.serial +
                     "\n" + DateFormat.format("dd.MM.yy",Sensorpart.ts_from) +
                     " to: " + DateFormat.format("dd.MM.yy",Sensorpart.ts_to) +
-                    " (" +JoH.niceTimeScalarShortWithDecimalHours(Sensorpart.ts_to - Sensorpart.ts_from) + ")" +
-                    " readings: " + (((Sensorpart.readings *100)/((Sensorpart.ts_to - Sensorpart.ts_from)))/600) + "%\n" +
+                    " (" +JoH.niceTimeScalarShortWithDecimalHours(Diff_ts) + ")" +
+                    " readings: " + (((Sensorpart.readings * 100)/((Diff_ts)))/600) + "%\n" +
                     "------------------\n";
         }
         return Sum;
