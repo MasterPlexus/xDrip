@@ -44,8 +44,8 @@ public class Libre2Sensor extends PlusModel {
             Sum = Sum + Sensorpart.serial +
                     "\n" + DateFormat.format("dd.MM.yy",Sensorpart.ts_from) +
                     " to: " + DateFormat.format("dd.MM.yy",Sensorpart.ts_to) +
-                    " (" +JoH.niceTimeScalarShort(Sensorpart.ts_to - Sensorpart.ts_from) + ")" +
-                    " readings: " + (((Sensorpart.ts_to-Sensorpart.ts_from)/600)/Sensorpart.readngs) + "%\n" +
+                    " (" +JoH.niceTimeScalarShortWithDecimalHours(Sensorpart.ts_to - Sensorpart.ts_from) + ")" +
+                    " readings: " + (Sensorpart.readngs /((Sensorpart.ts_to-Sensorpart.ts_from)/600)) + "%\n" +
                     "------------------\n";
         }
         return Sum;
