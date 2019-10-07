@@ -12,15 +12,20 @@ import android.preference.PreferenceManager;
 import com.eveningoutpost.dexdrip.Models.BgReading;
 import com.eveningoutpost.dexdrip.Models.JoH;
 import com.eveningoutpost.dexdrip.Models.Libre2RawValue;
+import com.eveningoutpost.dexdrip.Models.NSClientChat;
 import com.eveningoutpost.dexdrip.Models.Sensor;
+import com.eveningoutpost.dexdrip.Models.Treatments;
 import com.eveningoutpost.dexdrip.Models.UserError.Log;
 import com.eveningoutpost.dexdrip.UtilityModels.Intents;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 
+import java.security.Timestamp;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.eveningoutpost.dexdrip.Models.BgReading.bgReadingInsertFromJson;
+import static com.eveningoutpost.dexdrip.Models.Treatments.SensorStart;
 
 /**
  * Created by jamorham on 14/11/2016.
@@ -63,6 +68,7 @@ public class LibreReceiver extends BroadcastReceiver {
                             case Intents.LIBRE2_ACTIVATION:
                                 Log.v(TAG, "Receiving LibreData activation");
                                 saveSensorStartTime(intent.getBundleExtra("sensor"), intent.getBundleExtra("bleManager").getString("sensorSerial"));
+                                SensorStart(0); //Send new Sensor also to NightScout
                                 break;
 
                             case Intents.LIBRE2_BG:
