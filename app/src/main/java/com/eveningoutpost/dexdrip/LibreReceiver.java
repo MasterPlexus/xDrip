@@ -40,6 +40,7 @@ public class LibreReceiver extends BroadcastReceiver {
     private static SharedPreferences prefs;
     private static final Object lock = new Object();
     private static String libre_calc_doku="wait for next reading...";
+    private static Long libre_calc_doku_simple=0L;
     private static long last_reading=0;
 
     @Override
@@ -163,7 +164,9 @@ public class LibreReceiver extends BroadcastReceiver {
             sum += rawValue.glucose * weight;
             weightSum += weight;
             libre_calc_doku += DateFormat.format("kk:mm:ss :",rawValue.timestamp) + " w:" + longformat.format(weight) +" raw: " + rawValue.glucose  + "\n" ;
-           }
+
+        }
+        libre_calc_doku_simple=rawValues.size()*100L / 20L;
         return Math.round(sum / weightSum);
     }
 
@@ -179,6 +182,7 @@ public class LibreReceiver extends BroadcastReceiver {
         } catch (Exception e) {
             Log.e(TAG, "Error readlast: " + e);
         }
+        l.add(new StatusItem("last20Minutes Quality", libre_calc_doku_simple + "%"));
         if (get_engineering_mode()) {
             l.add(new StatusItem("Last Calc.", libre_calc_doku));
         }
