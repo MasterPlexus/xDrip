@@ -13,6 +13,7 @@ import android.text.format.DateFormat;
 import com.eveningoutpost.dexdrip.Models.BgReading;
 import com.eveningoutpost.dexdrip.Models.JoH;
 import com.eveningoutpost.dexdrip.Models.Libre2RawValue;
+import com.eveningoutpost.dexdrip.Models.Libre2Sensor;
 import com.eveningoutpost.dexdrip.Models.NSClientChat;
 import com.eveningoutpost.dexdrip.Models.Sensor;
 import com.eveningoutpost.dexdrip.Models.Treatments;
@@ -89,6 +90,7 @@ public class LibreReceiver extends BroadcastReceiver {
                                     List<Libre2RawValue> smoothingValues = Libre2RawValue.last20Minutes();
                                     smoothingValues.add(currentRawValue);
                                     processValues(currentRawValue, smoothingValues, context);
+                                    Pref.setInt("nfc_sensor_age", (int)((currentRawValue.timestamp - Sensor.currentSensor().started_at) / 60000)) ;
                                 }
                                 currentRawValue.save();
 
