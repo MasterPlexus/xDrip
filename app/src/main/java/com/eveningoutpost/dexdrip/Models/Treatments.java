@@ -224,6 +224,23 @@ public class Treatments extends Model {
         return Treatment;
     }
 
+    public static synchronized Treatments SensorChange(long timestamp) {
+        if (timestamp == 0) {
+            timestamp = new Date().getTime();
+        }
+
+        final Treatments Treatment = new Treatments();
+        Treatment.enteredBy = XDRIP_TAG;
+        Treatment.eventType = "Sensor Change";
+        Treatment.created_at = DateUtil.toISOString(timestamp);
+        Treatment.timestamp = timestamp;
+        Treatment.uuid = UUID.randomUUID().toString();
+        Treatment.save();
+        pushTreatmentSync(Treatment);
+        Log.e(TAG,"pushed change " + Treatment.timestamp + " " + Treatment.created_at);
+        return Treatment;
+    }
+
     private static void pushTreatmentSync(Treatments treatment) {
         pushTreatmentSync(treatment, true, null); // new entry by default
     }

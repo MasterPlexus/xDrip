@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.eveningoutpost.dexdrip.Home.get_engineering_mode;
 import static com.eveningoutpost.dexdrip.Models.BgReading.bgReadingInsertFromJson;
+import static com.eveningoutpost.dexdrip.Models.Treatments.SensorChange;
 import static com.eveningoutpost.dexdrip.Models.Treatments.SensorStart;
 import static com.eveningoutpost.dexdrip.Models.Libre2Sensor.Libre2Sensors;
 
@@ -78,7 +79,7 @@ public class LibreReceiver extends BroadcastReceiver {
                             case Intents.LIBRE2_ACTIVATION:
                                 Log.v(TAG, "Receiving LibreData activation");
                                 saveSensorStartTime(intent.getBundleExtra("sensor"), intent.getBundleExtra("bleManager").getString("sensorSerial"));
-                                SensorStart(0); //Send new Sensor also to NightScout
+                                SensorChange(0); //Send new Sensor also to NightScout
                                 break;
 
                             case Intents.LIBRE2_BG:
@@ -91,6 +92,10 @@ public class LibreReceiver extends BroadcastReceiver {
                                     smoothingValues.add(currentRawValue);
                                     processValues(currentRawValue, smoothingValues, context);
                                     Pref.setInt("nfc_sensor_age", (int)((currentRawValue.timestamp - Sensor.currentSensor().started_at) / 60000)) ;
+                                }
+                                //Test
+                                if(JoH.ratelimit("libre2sensor-changetest", 600)) {
+                                    SensorChange(0);
                                 }
                                 currentRawValue.save();
 
