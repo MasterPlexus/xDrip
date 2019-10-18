@@ -224,7 +224,7 @@ public class Treatments extends Model {
         return Treatment;
     }
 
-    public static synchronized Treatments SensorChange(long timestamp) {
+    public static synchronized void SensorChange(long timestamp) {
         if (timestamp == 0) {
             timestamp = new Date().getTime();
         }
@@ -236,9 +236,10 @@ public class Treatments extends Model {
         Treatment.timestamp = timestamp;
         Treatment.uuid = UUID.randomUUID().toString();
         Treatment.save();
-        pushTreatmentSync(Treatment);
-        Log.e(TAG,"pushed change " + Treatment.timestamp + " " + Treatment.created_at);
-        return Treatment;
+        NSClientChat.pushTreatmentAsync(Treatment);
+        if (UploaderQueue.newEntry("insert" , Treatment) != null) {
+            SyncService.startSyncService(3000); // sync in 3 seconds
+        }
     }
 
     private static void pushTreatmentSync(Treatments treatment) {
@@ -252,15 +253,13 @@ public class Treatments extends Model {
         if (!(Pref.getBoolean("cloud_storage_api_enable", false) || Pref.getBoolean("cloud_storage_mongodb_enable", false))) {
             NSClientChat.pushTreatmentAsync(treatment);
         } else {
-            Log.e(TAG, "Skipping NSClient treatment broadcast as nightscout direct sync is enabled");
+            Log.d(TAG, "Skipping NSClient treatment broadcast as nightscout direct sync is enabled");
         }
 
         if (suggested_uuid == null) {
             // only sync to nightscout if source of change was not from nightscout
             if (UploaderQueue.newEntry(is_new ? "insert" : "update", treatment) != null) {
                 SyncService.startSyncService(3000); // sync in 3 seconds
-            } else {
-                Log.e(TAG, "NSupload not done as data was from NS");
             }
         }
     }
