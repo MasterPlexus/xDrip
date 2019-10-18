@@ -252,13 +252,15 @@ public class Treatments extends Model {
         if (!(Pref.getBoolean("cloud_storage_api_enable", false) || Pref.getBoolean("cloud_storage_mongodb_enable", false))) {
             NSClientChat.pushTreatmentAsync(treatment);
         } else {
-            Log.d(TAG, "Skipping NSClient treatment broadcast as nightscout direct sync is enabled");
+            Log.e(TAG, "Skipping NSClient treatment broadcast as nightscout direct sync is enabled");
         }
 
         if (suggested_uuid == null) {
             // only sync to nightscout if source of change was not from nightscout
             if (UploaderQueue.newEntry(is_new ? "insert" : "update", treatment) != null) {
                 SyncService.startSyncService(3000); // sync in 3 seconds
+            } else {
+                Log.e(TAG, "NSupload not done as data was from NS");
             }
         }
     }
